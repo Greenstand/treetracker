@@ -342,6 +342,80 @@ yarn install              # Reinstall after changes
 yarn type-check           # Verify types still work
 ```
 
+### Running SQL Queries on Production Database
+
+The production database is accessed via SSH tunnel. To query it securely, store credentials in `.env` and run queries via SSH.
+
+**Setup (one-time)**:
+
+1. Create `.env` file in the root directory:
+```bash
+cat > .env << 'EOF'
+# Production Database Credentials
+DB_USER=readonlyuser
+DB_PASSWORD=your_actual_password_here
+DB_HOST=treetracker-cluster-read-only-37982-do-user-8540031-0.b.db.ondigitalocean.com
+DB_PORT=25060
+DB_NAME=treetracker
+
+# SSH Server
+SSH_HOST=204.48.16.148
+SSH_USER=root
+EOF
+```
+
+2. **Never commit `.env`** - add to `.gitignore` if not already there:
+```bash
+echo ".env" >> .gitignore
+```
+
+**Run SQL queries**:
+
+```bash
+# Load variables and execute query
+source .env && ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\" -c \"SELECT count(*) FROM planter;\""
+```
+
+**Examples**:
+
+```bash
+# Get planter count
+source .env && ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\" -c \"SELECT count(*) FROM planter;\""
+
+# Get recent trees planted
+source .env && ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\" -c \"SELECT * FROM tree LIMIT 10;\""
+
+# Get wallet statistics
+source .env && ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\" -c \"SELECT COUNT(*) as wallet_count FROM wallet;\""
+```
+
+**Multi-line SQL queries**:
+
+```bash
+source .env && ssh ${SSH_USER}@${SSH_HOST} << 'SQL'
+psql "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" -c "
+SELECT
+  p.id,
+  p.email,
+  COUNT(t.id) as tree_count
+FROM planter p
+LEFT JOIN tree t ON p.id = t.planter_id
+GROUP BY p.id, p.email
+ORDER BY tree_count DESC
+LIMIT 20;
+"
+SQL
+```
+
+**Quick alias** (optional - add to your shell config):
+
+```bash
+alias db-query='source .env && ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\" -c"'
+
+# Usage:
+db-query "SELECT count(*) FROM planter;"
+```
+
 ## Important Notes
 
 - **Always run tests before creating a PR** - use `yarn cypress-e2e-headless-test` for quick validation
