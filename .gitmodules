@@ -1,0 +1,12 @@
+[submodule "treetracker-wallet-app"]
+	path = treetracker-wallet-app
+	url = git@github.com:Amaanfaiz/treetracker-wallet-app.git
+[submodule "treetracker-database"]
+	path = treetracker-database
+	url = git@github.com:Greenstand/treetracker-database.git
+[submodule "treetracker-infrastructure"]
+	path = treetracker-infrastructure
+	url = git@github.com:Greenstand/treetracker-infrastructure.git
+[submodule "treetracker-admin-client"]
+	path = treetracker-admin-client
+	url = git@github.com:Greenstand/treetracker-admin-client.git
