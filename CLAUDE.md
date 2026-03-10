@@ -416,6 +416,52 @@ alias db-query='source .env && ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://
 db-query "SELECT count(*) FROM planter;"
 ```
 
+# About data pipeline
+
+Tree capture and session upload to s3 and trigger a queue in the AWS and dump the upload info to a table, then run service to handle the uploaded file. 
+
+Here is example of the upload file:
+
+```
+data_pipeline=> select * from bulk_tree_upload where created_at > '2026-01-01' limit 1;
+created_at            | 2026-01-31 05:17:51.581232
+queue_record          | {"s3": {"bucket": {"arn": "arn:aws:s3:::treetracker-production-batch-uploads", "na
+me": "treetracker-production-batch-uploads", "ownerIdentity": {"principalId": "A1N1UIC6HWZ5VY"}}, "object"
+: {"key": "2026-01-31-08-16-59_31eb5602-dd64-48f3-a684-17d3c17987c9_68dcf5862654c62c3ca22f741078be6d_sessi
+ons.json", "eTag": "68dcf5862654c62c3ca22f741078be6d", "size": 224, "sequencer": "00697D907E3A74BC7B"}, "c
+onfigurationId": "TreeBundleUploaded", "s3SchemaVersion": "1.0"}, "awsRegion": "eu-central-1", "eventName"
+: "ObjectCreated:Put", "eventTime": "2026-01-31T05:17:50.269Z", "eventSource": "aws:s3", "eventVersion": "
+2.1", "userIdentity": {"principalId": "AWS:AROAQYWVSSHAJ6KGOGWNR:CognitoIdentityCredentials"}, "responseEl
+ements": {"x-amz-id-2": "eL/2aE/1mxrx2XRqn5e+wCgt45c1BmP7DIG7vVtuuqqR21YFlWeZBi0lWEPbptaR1WpOj4FeI5f8bbw+s
+0tpzTrfmoyDe499", "x-amz-request-id": "4PYBB59E8FVFACBF"}, "requestParameters": {"sourceIPAddress": "41.21
+0.146.79"}}
+event_time            | 2026-01-31 05:17:50.269
+bucket_arn            | arn:aws:s3:::treetracker-production-batch-uploads
+key                   | 2026-01-31-08-16-59_31eb5602-dd64-48f3-a684-17d3c17987c9_68dcf5862654c62c3ca22f741
+078be6d_sessions.json
+processed             | t
+processed_at          | 2026-01-31 05:22:18.032447
+deleted_from_queue    | f
+deleted_from_queue_at | 
+bulk_data             | {"trees": null, "tracks": null, "devices": null, "captures": null, "messages": nul
+l, "sessions": [], "device_id": "29fb51ac12ccc9ad", "registrations": null, "pack_format_version": "2", "wa
+llet_registrations": null, "device_configurations": null}
+```
+
+For every capture upload, it is uploaded to file/key like: `2026-03-09-12-33-43_291f36b6-546e-4aaf-a2c8-73ee09a74935_dae8fcd3835fc3417410a9147591e029_captures.json`, and the content of every upload capture file is an json format like below:
+
+```
+
+{"device_configurations":null,"device_id":"16aae2ad4a3755cc","devices":null,"messages":null,"registrations":null,"sessions":null,"tracks":null,"captures":[{"captured_at":"2026-03-09T08:02:07Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5385000000000001_33.15922833333333_6953a85f-8511-490f-b236-1e02b4d48d76_IMG_20260309_110151_6384571112025666321.jpg","lat":0.5385000000000001,"lon":33.15922833333333,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"027699f3-23c7-41db-b416-1e7d76629d06","abs_step_count":null,"id":"73130d2c-b5c9-4c11-8dd5-6480fd02be80"},{"captured_at":"2026-03-09T08:02:41Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.538501_33.15926266666666_f8db273b-df7e-4704-b947-e5a80ec1b5bc_IMG_20260309_110228_1632213207212354036.jpg","lat":0.538501,"lon":33.15926266666666,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"027699f3-23c7-41db-b416-1e7d76629d06","abs_step_count":null,"id":"0fe38296-ab38-4c59-a880-02c9f3e9dbb4"},{"captured_at":"2026-03-09T08:04:18Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384290000000003_33.15918533333332_a628d84e-63c1-411e-a798-b2ff0d0e60a6_IMG_20260309_110402_2159827751116765401.jpg","lat":0.5384290000000003,"lon":33.15918533333332,"note":" Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"13705d00-a0a6-4935-b3d2-16e0578f8616"},{"captured_at":"2026-03-09T08:04:49Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384350000000004_33.15924499999995_6b2fa7b3-071c-4439-9039-8315fdd1e0ea_IMG_20260309_110440_8765146514080062305.jpg","lat":0.5384350000000004,"lon":33.15924499999995,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"bbb37d76-8f42-46dd-a4ce-6e447732095c"},{"captured_at":"2026-03-09T08:05:27Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384466666666672_33.15926833333326_70b5e652-f37b-4bf8-8a31-913f49177ac3_IMG_20260309_110510_7915150404104846120.jpg","lat":0.5384466666666672,"lon":33.15926833333326,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"8b770b7f-4782-4e95-8299-30c76f9f6155"},{"captured_at":"2026-03-09T08:06:17Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5383976666666669_33.15934133333328_b08284aa-d59c-4b9f-8b23-fdb60fbfa716_IMG_20260309_110603_4719242128092101186.jpg","lat":0.5383976666666669,"lon":33.15934133333328,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"ce648715-3a6d-4edf-8272-e921d550099e"},{"captured_at":"2026-03-09T08:06:50Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5383746666666667_33.159329666666586_ec2c98cd-13c8-496b-b4ed-0414b777b93b_IMG_20260309_110640_3710939403009411537.jpg","lat":0.5383746666666667,"lon":33.159329666666586,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"fcc4de2e-9f7c-4864-86dd-37baaad66093"},{"captured_at":"2026-03-09T08:07:25Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384050000000001_33.159341666666606_37380e1f-67d9-423e-9916-129f4282c6ba_IMG_20260309_110714_4892240232361254582.jpg","lat":0.5384050000000001,"lon":33.159341666666606,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"d0941216-7dc1-4dd7-ab15-c8709777cfe7"},{"captured_at":"2026-03-09T08:07:58Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384166666666669_33.159341666666606_041809be-7570-4e88-9d4f-16a102ad511f_IMG_20260309_110746_8159121400069532020.jpg","lat":0.5384166666666669,"lon":33.159341666666606,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"85282d89-6aa0-4135-a7bc-aaf4e9a99528"},{"captured_at":"2026-03-09T08:08:35Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384516666666666_33.159374999999926_b3664a33-f215-4142-bba6-355b5a673c40_IMG_20260309_110822_7238455638058700154.jpg","lat":0.5384516666666666,"lon":33.159374999999926,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"fd373bc0-420d-4c88-899b-10d74f0338e5"},{"captured_at":"2026-03-09T08:09:26Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384566666666669_33.15933666666658_0769987b-d2fe-4593-86ee-06e26c1a828e_IMG_20260309_110856_333917252600001978.jpg","lat":0.5384566666666669,"lon":33.15933666666658,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"658a6039-5aed-4f9a-9792-c37a321e1383"},{"captured_at":"2026-03-09T08:10:21Z","delta_step_count":null,"extra_attributes":null,"image_url":"https://treetracker-production-images.s3.eu-central-1.amazonaws.com/2026.03.09.12.33.41_0.5384483333333333_33.15938333333328_04158aea-648c-4cf2-bf0b-dc01294696ee_IMG_20260309_111003_2548130708399289959.jpg","lat":0.5384483333333333,"lon":33.15938333333328,"note":"Buwagi primary school papaya ","rotation_matrix":null,"session_id":"6eb7b057-ec2e-449d-8e11-be4a236d2bc2","abs_step_count":null,"id":"9442ee7b-ad77-40d8-804c-c87e742dc5c7"}],"trees":null,"pack_format_version":"2","wallet_registrations":null}
+
+```
+To download the file:
+
+```bash
+aws s3 cp s3://treetracker-production-batch-uploads/2026-03-09-12-33-43_291f36b6-546e-4aaf-a2c8-73ee09a74935_dae8fcd3835fc3417410a9147591e029_captures.json ~/temp/capture.json
+```
+
+
 ## Important Notes
 
 - **Always run tests before creating a PR** - use `yarn cypress-e2e-headless-test` for quick validation
