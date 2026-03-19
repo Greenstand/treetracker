@@ -372,9 +372,12 @@ echo ".env" >> .gitignore
 **Run SQL queries**:
 
 ```bash
-# Load variables and execute query
-source .env && ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\" -c \"SELECT count(*) FROM planter;\""
+# execute query
+ssh ${SSH_USER}@${SSH_HOST} "psql \"postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require\" -c \"SELECT count(*) FROM planter;\""
 ```
+The db env var is in file:
+For development: `.env.database.development`
+For production: `.env.database.production`
 
 **Examples**:
 
