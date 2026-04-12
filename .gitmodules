@@ -10,3 +10,6 @@
 [submodule "treetracker-admin-client"]
 	path = treetracker-admin-client
 	url = git@github.com:Greenstand/treetracker-admin-client.git
+[submodule "treetracker-android"]
+	path = treetracker-android
+	url = https://github.com/Greenstand/treetracker-android.git
