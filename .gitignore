@@ -16,3 +16,5 @@ Thumbs.db
 # Logs
 *.log
 .claude
+.env .env.database.development .env.database.production .env.example
+.env*
