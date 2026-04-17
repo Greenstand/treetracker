@@ -13,3 +13,6 @@
 [submodule "treetracker-android"]
 	path = treetracker-android
 	url = https://github.com/Greenstand/treetracker-android.git
+[submodule "treetracker-web-map-client"]
+	path = treetracker-web-map-client
+	url = git@github.com:Greenstand/treetracker-web-map-client.git
