@@ -27,3 +27,11 @@ e2e:
 lint:
 	helm lint . -f values/local.yaml
 	helm template greenstand . -f values/local.yaml > /dev/null
+
+port-forward:
+	kubectl port-forward svc/greenstand-postgres 5432:5432 &
+	kubectl port-forward svc/greenstand-localstack 4566:4566 &
+
+seed: port-forward
+	sleep 3
+	bash scripts/seed-localstack.sh
