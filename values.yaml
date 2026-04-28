@@ -1,0 +1,89 @@
+postgres:
+  enabled: true
+  auth:
+    database: treetracker
+    username: treetracker
+    password: treetracker
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+localstack:
+  enabled: false
+
+airflow:
+  enabled: true
+  executor: LocalExecutor
+  webserverSecretKey: "change-me-in-production"
+
+  scheduler:
+    replicas: 1
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+
+  webserver:
+    replicas: 1
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+
+  workers:
+    replicas: 0
+
+  flower:
+    enabled: false
+
+  redis:
+    enabled: false
+
+  pgbouncer:
+    enabled: false
+
+  statsd:
+    enabled: false
+
+  postgresql:
+    enabled: false
+
+  data:
+    metadataConnection:
+      user: treetracker
+      pass: treetracker
+      host: greenstand-postgres
+      port: 5432
+      db: airflow
+      protocol: postgresql
+
+  dags:
+    gitSync:
+      enabled: false
+    persistence:
+      enabled: false
+
+  logs:
+    persistence:
+      enabled: false
+
+cert-manager:
+  enabled: true
+  installCRDs: true
+
+ambassador:
+  enabled: true
+
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: admin
+
+sealed-secrets:
+  enabled: true

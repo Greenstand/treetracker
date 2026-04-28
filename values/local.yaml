@@ -1,0 +1,36 @@
+# values/local.yaml — local k3s overrides
+
+postgres:
+  primary:
+    persistence:
+      size: 2Gi
+  readReplicas:
+    replicaCount: 0
+
+localstack:
+  enabled: true
+  startServices: "s3,sqs,sns"
+  persistence:
+    enabled: false
+  resources:
+    limits:
+      memory: 512Mi
+
+airflow:
+  executor: LocalExecutor
+  workers:
+    replicas: 0
+  scheduler:
+    resources:
+      limits:
+        memory: 300Mi
+  webserver:
+    resources:
+      limits:
+        memory: 200Mi
+
+aws:
+  endpoint: "http://greenstand-localstack:4566"
+  region: us-east-1
+  accessKeyId: test
+  secretAccessKey: test
