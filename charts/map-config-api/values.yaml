@@ -1,0 +1,17 @@
+replicaCount: 2
+
+image:
+  repository: greenstand/map-config-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+env:
+  - name: DATABASE_URL
+    value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+resources: {}
