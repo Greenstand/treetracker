@@ -1,0 +1,6 @@
+apiVersion: v2
+name: treetracker-web-map-client
+description: Greenstand treetracker-web-map-client
+type: application
+version: 0.1.0
+appVersion: "latest"

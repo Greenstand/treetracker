@@ -1,0 +1,6 @@
+apiVersion: v2
+name: treetracker-admin-client
+description: Greenstand treetracker-admin-client
+type: application
+version: 0.1.0
+appVersion: "latest"

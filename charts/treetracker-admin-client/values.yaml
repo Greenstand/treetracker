@@ -1,0 +1,17 @@
+replicaCount: 2
+
+image:
+  repository: greenstand/treetracker-admin-client
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+env:
+  - name: REACT_APP_API_ROOT
+    value: "http://greenstand-treetracker-admin-api:80"
+
+resources: {}
