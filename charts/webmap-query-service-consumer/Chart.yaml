@@ -1,0 +1,6 @@
+apiVersion: v2
+name: webmap-query-service-consumer
+description: Greenstand webmap-query-service-consumer
+type: application
+version: 0.1.0
+appVersion: "latest"

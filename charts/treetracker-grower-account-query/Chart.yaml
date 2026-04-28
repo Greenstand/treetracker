@@ -1,0 +1,6 @@
+apiVersion: v2
+name: treetracker-grower-account-query
+description: Greenstand treetracker-grower-account-query
+type: application
+version: 0.1.0
+appVersion: "latest"

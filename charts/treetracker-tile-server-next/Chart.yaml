@@ -1,0 +1,6 @@
+apiVersion: v2
+name: treetracker-tile-server-next
+description: Greenstand treetracker-tile-server-next
+type: application
+version: 0.1.0
+appVersion: "latest"
