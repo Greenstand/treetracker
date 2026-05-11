@@ -41,3 +41,117 @@ dependencies:
     version: "2.18.5"
     repository: https://bitnami-labs.github.io/sealed-secrets
     condition: sealed-secrets.enabled
+
+  # Auth
+  - name: treetracker-auth
+    version: "0.1.0"
+    repository: "file://charts/treetracker-auth"
+
+  # Core APIs
+  - name: treetracker-admin-api
+    version: "0.1.0"
+    repository: "file://charts/treetracker-admin-api"
+
+  - name: treetracker-field-data
+    version: "0.1.0"
+    repository: "file://charts/treetracker-field-data"
+
+  - name: treetracker-wallet-api
+    version: "0.1.0"
+    repository: "file://charts/treetracker-wallet-api"
+
+  - name: treetracker-messaging-api
+    version: "0.1.0"
+    repository: "file://charts/treetracker-messaging-api"
+
+  - name: treetracker-stakeholder-api
+    version: "0.1.0"
+    repository: "file://charts/treetracker-stakeholder-api"
+
+  - name: treetracker-reporting
+    version: "0.1.0"
+    repository: "file://charts/treetracker-reporting"
+
+  - name: treetracker-like
+    version: "0.1.0"
+    repository: "file://charts/treetracker-like"
+
+  - name: treetracker-api
+    version: "0.1.0"
+    repository: "file://charts/treetracker-api"
+
+  # Data + Pipeline
+  - name: treetracker-grower-account-query
+    version: "0.1.0"
+    repository: "file://charts/treetracker-grower-account-query"
+
+  - name: images-api
+    version: "0.1.0"
+    repository: "file://charts/images-api"
+
+  - name: treetracker-tile-server
+    version: "0.1.0"
+    repository: "file://charts/treetracker-tile-server"
+
+  - name: treetracker-tile-server-next
+    version: "0.1.0"
+    repository: "file://charts/treetracker-tile-server-next"
+
+  - name: treetracker-denormalization
+    version: "0.1.0"
+    repository: "file://charts/treetracker-denormalization"
+
+  - name: bulk-pack-consumer
+    version: "0.1.0"
+    repository: "file://charts/bulk-pack-consumer"
+
+  - name: bulk-pack-transformer
+    version: "0.1.0"
+    repository: "file://charts/bulk-pack-transformer"
+
+  - name: bulk-pack-transformer-v2
+    version: "0.1.0"
+    repository: "file://charts/bulk-pack-transformer-v2"
+
+  - name: bulk-pack-processor
+    version: "0.1.0"
+    repository: "file://charts/bulk-pack-processor"
+
+  - name: webmap-query-service-consumer
+    version: "0.1.0"
+    repository: "file://charts/webmap-query-service-consumer"
+
+  # Webmap
+  - name: treetracker-query-api
+    version: "0.1.0"
+    repository: "file://charts/treetracker-query-api"
+
+  - name: postgrest
+    version: "0.1.0"
+    repository: "file://charts/postgrest"
+
+  - name: map-config-api
+    version: "0.1.0"
+    repository: "file://charts/map-config-api"
+
+  # Gateway
+  - name: treetracker-gateway
+    version: "0.1.0"
+    repository: "file://charts/treetracker-gateway"
+
+  # Clients
+  - name: treetracker-admin-client
+    version: "0.1.0"
+    repository: "file://charts/treetracker-admin-client"
+
+  - name: treetracker-wallet-app
+    version: "0.1.0"
+    repository: "file://charts/treetracker-wallet-app"
+
+  - name: treetracker-web-map-client
+    version: "0.1.0"
+    repository: "file://charts/treetracker-web-map-client"
+
+  - name: wallet-monorepo-user-api
+    version: "0.1.0"
+    repository: "file://charts/wallet-monorepo-user-api"
