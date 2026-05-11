@@ -34,3 +34,59 @@ aws:
   region: us-east-1
   accessKeyId: test
   secretAccessKey: test
+
+# --- All services: 1 replica locally ---
+treetracker-auth:
+  replicaCount: 1
+treetracker-admin-api:
+  replicaCount: 1
+treetracker-field-data:
+  replicaCount: 1
+treetracker-wallet-api:
+  replicaCount: 1
+treetracker-messaging-api:
+  replicaCount: 1
+treetracker-stakeholder-api:
+  replicaCount: 1
+treetracker-reporting:
+  replicaCount: 1
+treetracker-like:
+  replicaCount: 1
+treetracker-api:
+  replicaCount: 1
+treetracker-grower-account-query:
+  replicaCount: 1
+images-api:
+  replicaCount: 1
+treetracker-tile-server:
+  replicaCount: 1
+treetracker-tile-server-next:
+  replicaCount: 1
+treetracker-denormalization:
+  replicaCount: 1
+bulk-pack-consumer:
+  replicaCount: 1
+bulk-pack-transformer:
+  replicaCount: 1
+bulk-pack-transformer-v2:
+  replicaCount: 1
+bulk-pack-processor:
+  replicaCount: 1
+webmap-query-service-consumer:
+  replicaCount: 1
+treetracker-query-api:
+  replicaCount: 1
+postgrest:
+  replicaCount: 1
+map-config-api:
+  replicaCount: 1
+treetracker-gateway:
+  replicaCount: 1
+treetracker-admin-client:
+  replicaCount: 1
+treetracker-wallet-app:
+  replicaCount: 1
+treetracker-web-map-client:
+  replicaCount: 1
+wallet-monorepo-user-api:
+  replicaCount: 1

@@ -87,3 +87,59 @@ keycloak:
 
 sealed-secrets:
   enabled: true
+
+# --- Application Service Defaults ---
+treetracker-auth:
+  replicaCount: 2
+treetracker-admin-api:
+  replicaCount: 2
+treetracker-field-data:
+  replicaCount: 2
+treetracker-wallet-api:
+  replicaCount: 2
+treetracker-messaging-api:
+  replicaCount: 2
+treetracker-stakeholder-api:
+  replicaCount: 2
+treetracker-reporting:
+  replicaCount: 2
+treetracker-like:
+  replicaCount: 2
+treetracker-api:
+  replicaCount: 2
+treetracker-grower-account-query:
+  replicaCount: 2
+images-api:
+  replicaCount: 2
+treetracker-tile-server:
+  replicaCount: 2
+treetracker-tile-server-next:
+  replicaCount: 2
+treetracker-denormalization:
+  replicaCount: 2
+bulk-pack-consumer:
+  replicaCount: 2
+bulk-pack-transformer:
+  replicaCount: 2
+bulk-pack-transformer-v2:
+  replicaCount: 2
+bulk-pack-processor:
+  replicaCount: 2
+webmap-query-service-consumer:
+  replicaCount: 2
+treetracker-query-api:
+  replicaCount: 2
+postgrest:
+  replicaCount: 2
+map-config-api:
+  replicaCount: 2
+treetracker-gateway:
+  replicaCount: 2
+treetracker-admin-client:
+  replicaCount: 2
+treetracker-wallet-app:
+  replicaCount: 2
+treetracker-web-map-client:
+  replicaCount: 2
+wallet-monorepo-user-api:
+  replicaCount: 2

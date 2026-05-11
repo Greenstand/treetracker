@@ -11,5 +11,3 @@
 *.bak
 *.tmp
 *~
-# Helm dependency tarballs (regenerated via helm dependency update)
-charts/*.tgz
