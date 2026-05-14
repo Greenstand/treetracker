@@ -3,8 +3,14 @@
 # Empty Docker config dir so Helm skips docker-credential-osxkeychain (Podman setup)
 HELM := DOCKER_CONFIG=$(CURDIR)/.helm-docker-config helm
 
+UNAME := $(shell uname)
+
 setup:
+ifeq ($(UNAME), Darwin)
+	bash scripts/setup-k3d.sh
+else
 	bash scripts/setup-k3s.sh
+endif
 
 submodules:
 	git submodule update --init --recursive

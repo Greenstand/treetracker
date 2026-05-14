@@ -1,22 +1,53 @@
 # Greenstand Monorepo
 
-Deploys the full Greenstand platform into a local k3s cluster for local development and e2e testing.
+Deploys the full Greenstand platform into a local Kubernetes cluster for local development and e2e testing.
 
 ## Prerequisites
 
-- [Podman](https://podman.io/docs/installation) (aliased to `docker`)
+**All platforms:**
 - [Helm 3.14+](https://helm.sh/docs/intro/install/)
-- [Skaffold 2.10+](https://skaffold.dev/docs/install/) (for local dev only)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) (for LocalStack seeding)
-- [k3s](https://k3s.io/) (installed via `make setup`)
+- [Skaffold 2.10+](https://skaffold.dev/docs/install/) (for `make dev` only)
+
+**macOS:** [Podman](https://podman.io/docs/installation) + [k3d](https://k3d.io/) (installed via `make setup`)
+
+**Linux:** [k3s](https://k3s.io/) (installed via `make setup`)
 
 ## First-time Setup
 
+`make setup` auto-detects your OS:
+
 ```bash
-make setup          # installs k3s + configures local registry (requires sudo)
+make setup          # macOS: installs k3d + creates cluster with local registry
+                    # Linux: installs k3s + starts local registry container
 make submodules     # pulls all service repos
 ```
+
+### macOS detail
+
+`make setup` on macOS:
+1. Ensures your Podman machine is running
+2. Installs k3d via Homebrew if not present (`brew install k3d`)
+3. Creates a k3d cluster named `greenstand` with a built-in registry at `localhost:5000`
+4. Merges the cluster kubeconfig into `~/.kube/config`
+
+If you prefer to do it manually:
+```bash
+brew install k3d
+podman machine start
+k3d cluster create greenstand --registry-create greenstand-registry:0.0.0.0:5000 --wait
+k3d kubeconfig merge greenstand --kubeconfig-merge-default
+```
+
+To tear down the cluster entirely:
+```bash
+k3d cluster delete greenstand
+```
+
+### Linux detail
+
+`make setup` on Linux installs k3s (requires `sudo`) and starts a local Docker/Podman registry container at `localhost:5000`.
 
 ## Running the Stack
 

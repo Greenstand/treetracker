@@ -1,1 +1,3 @@
 .helm-docker-config/
+charts/*.tgz
+.claude
