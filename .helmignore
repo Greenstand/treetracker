@@ -11,3 +11,13 @@
 *.bak
 *.tmp
 *~
+# Non-chart directories — these are included by default but bloat the Helm
+# release Secret (which has a 3MB Kubernetes API limit) past the limit.
+services/
+scripts/
+docs/
+e2e/
+.helm-docker-config/
+skaffold.yaml
+README.md
+*.md

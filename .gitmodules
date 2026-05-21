@@ -64,3 +64,15 @@
 [submodule "services/treetracker-web-map-client"]
 	path = services/treetracker-web-map-client
 	url = https://github.com/Greenstand/treetracker-web-map-client
+[submodule "services/treetracker-earnings-api"]
+	path = services/treetracker-earnings-api
+	url = https://github.com/Greenstand/treetracker-earnings-api
+[submodule "services/treetracker-regions-api"]
+	path = services/treetracker-regions-api
+	url = https://github.com/Greenstand/treetracker-regions-api
+[submodule "services/treetracker-contract-api"]
+	path = services/treetracker-contract-api
+	url = https://github.com/Greenstand/treetracker-contract-api
+[submodule "services/treetracker-web-map-api"]
+	path = services/treetracker-web-map-api
+	url = https://github.com/Greenstand/treetracker-web-map-api

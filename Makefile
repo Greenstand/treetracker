@@ -1,4 +1,4 @@
-.PHONY: setup up upgrade down dev e2e submodules lint port-forward seed
+.PHONY: setup up upgrade down reset dev e2e submodules lint port-forward seed
 
 # Empty Docker config dir so Helm skips docker-credential-osxkeychain (Podman setup)
 HELM := DOCKER_CONFIG=$(CURDIR)/.helm-docker-config helm
@@ -18,15 +18,22 @@ submodules:
 up:
 	mkdir -p .helm-docker-config
 	$(HELM) dependency update
+	bash scripts/stub-disabled-charts.sh
 	$(HELM) install greenstand . -f values/local.yaml
 
 upgrade:
 	mkdir -p .helm-docker-config
 	$(HELM) dependency update
+	bash scripts/stub-disabled-charts.sh
 	$(HELM) upgrade greenstand . -f values/local.yaml
 
 down:
 	$(HELM) uninstall greenstand
+
+reset:
+	k3d cluster delete greenstand 2>/dev/null || true
+	k3d registry delete greenstand-registry 2>/dev/null || true
+	$(MAKE) setup
 
 dev:
 	@if [ -z "$(SERVICE)" ]; then echo "Usage: make dev SERVICE=<service-name>"; exit 1; fi

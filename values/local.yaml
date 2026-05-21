@@ -16,18 +16,19 @@ localstack:
     limits:
       memory: 512Mi
 
+# Disabled locally — not needed for service dev and reduce Helm release Secret size.
 airflow:
-  executor: LocalExecutor
-  workers:
-    replicas: 0
-  scheduler:
-    resources:
-      limits:
-        memory: 300Mi
-  webserver:
-    resources:
-      limits:
-        memory: 200Mi
+  enabled: false
+cert-manager:
+  enabled: false
+keycloak:
+  enabled: false
+sealed-secrets:
+  enabled: false
+# Ambassador/Emissary Ingress is amd64-only; its apiext pod crashes on Apple Silicon
+# (arm64) under QEMU emulation. k3d bundles Traefik for ingress on local.
+ambassador:
+  enabled: false
 
 aws:
   endpoint: "http://greenstand-localstack:4566"
