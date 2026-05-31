@@ -1,0 +1,106 @@
+# Image repo overrides: uses locally built images from the k3d registry.
+# Run `make build-all` to populate the registry, then `make upgrade` to redeploy.
+# Services without source (treetracker-gateway, wallet-monorepo-user-api,
+# treetracker-tile-server-next) are omitted — they stay on their chart defaults.
+
+bulk-pack-consumer:
+  image:
+    repository: k3d-greenstand-registry:5000/bulk-pack-consumer
+
+bulk-pack-processor:
+  image:
+    repository: k3d-greenstand-registry:5000/bulk-pack-processor
+
+bulk-pack-transformer:
+  image:
+    repository: k3d-greenstand-registry:5000/bulk-pack-transformer
+
+# bulk-pack-transformer-v2 uses the same image as bulk-pack-transformer
+bulk-pack-transformer-v2:
+  image:
+    repository: k3d-greenstand-registry:5000/bulk-pack-transformer
+
+images-api:
+  image:
+    repository: k3d-greenstand-registry:5000/images-api
+
+map-config-api:
+  image:
+    repository: k3d-greenstand-registry:5000/map-config-api
+
+treetracker-admin-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-admin-api
+
+treetracker-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-api
+
+treetracker-auth:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-auth
+
+treetracker-contract-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-contract-api
+
+treetracker-denormalization:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-denormalization
+
+treetracker-earnings-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-earnings-api
+
+treetracker-field-data:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-field-data
+
+treetracker-grower-account-query:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-grower-account-query
+
+treetracker-like:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-like
+
+# The tile-server chart's image comes from the treetracker-map-tile-server service dir
+treetracker-tile-server:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-map-tile-server
+
+treetracker-messaging-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-messaging-api
+
+treetracker-query-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-query-api
+
+treetracker-regions-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-regions-api
+
+treetracker-reporting:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-reporting
+
+treetracker-stakeholder-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-stakeholder-api
+
+treetracker-wallet-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-wallet-api
+
+treetracker-web-map-api:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-web-map-api
+
+treetracker-web-map-client:
+  image:
+    repository: k3d-greenstand-registry:5000/treetracker-web-map-client
+
+webmap-query-service-consumer:
+  image:
+    repository: k3d-greenstand-registry:5000/webmap-query-service-consumer

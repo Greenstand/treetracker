@@ -16,6 +16,11 @@ dependencies:
     repository: https://helm.localstack.cloud
     condition: localstack.enabled
 
+  - name: rabbitmq
+    version: "0.1.0"
+    repository: "file://charts/rabbitmq"
+    condition: rabbitmq.enabled
+
   - name: airflow
     version: "1.21.0"
     repository: https://airflow.apache.org

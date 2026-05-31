@@ -5,6 +5,9 @@ dependencies:
 - name: localstack
   repository: https://helm.localstack.cloud
   version: 0.7.0
+- name: rabbitmq
+  repository: file://charts/rabbitmq
+  version: 0.1.0
 - name: airflow
   repository: https://airflow.apache.org
   version: 1.21.0
@@ -101,5 +104,5 @@ dependencies:
 - name: wallet-monorepo-user-api
   repository: file://charts/wallet-monorepo-user-api
   version: 0.1.0
-digest: sha256:cf52ba9be3619e7fa04ab1d3e5a4ded684792cfe6faaa2d88d153beb7959f2a2
-generated: "2026-05-11T15:44:26.361932-07:00"
+digest: sha256:760457b80044ada9e5c5902c98a726c360e369ace823e5463d2c346368e5f7f1
+generated: "2026-05-31T14:55:58.567398-07:00"

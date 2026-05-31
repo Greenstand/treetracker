@@ -1,0 +1,16 @@
+image:
+  repository: k3d-greenstand-registry:5000/rabbitmq
+  tag: "3.13-management-alpine"
+  pullPolicy: IfNotPresent
+
+auth:
+  username: treetracker
+  password: treetracker
+  erlangCookie: greenstand-local-cookie
+
+persistence:
+  enabled: false
+
+resources:
+  limits:
+    memory: 256Mi
