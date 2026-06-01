@@ -23,86 +23,89 @@ dependencies:
 - name: sealed-secrets
   repository: https://bitnami-labs.github.io/sealed-secrets
   version: 2.18.5
-- name: treetracker-auth
-  repository: file://charts/treetracker-auth
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-admin-api
-  repository: file://charts/treetracker-admin-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-field-data
-  repository: file://charts/treetracker-field-data
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-wallet-api
-  repository: file://charts/treetracker-wallet-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-messaging-api
-  repository: file://charts/treetracker-messaging-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-stakeholder-api
-  repository: file://charts/treetracker-stakeholder-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-reporting
-  repository: file://charts/treetracker-reporting
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-like
-  repository: file://charts/treetracker-like
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-api
-  repository: file://charts/treetracker-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-grower-account-query
-  repository: file://charts/treetracker-grower-account-query
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: images-api
-  repository: file://charts/images-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-tile-server
-  repository: file://charts/treetracker-tile-server
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-tile-server-next
-  repository: file://charts/treetracker-tile-server-next
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-denormalization
-  repository: file://charts/treetracker-denormalization
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: bulk-pack-consumer
-  repository: file://charts/bulk-pack-consumer
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: bulk-pack-transformer
-  repository: file://charts/bulk-pack-transformer
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: bulk-pack-transformer-v2
-  repository: file://charts/bulk-pack-transformer-v2
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: bulk-pack-processor
-  repository: file://charts/bulk-pack-processor
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: webmap-query-service-consumer
-  repository: file://charts/webmap-query-service-consumer
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-query-api
-  repository: file://charts/treetracker-query-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: postgrest
-  repository: file://charts/postgrest
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: map-config-api
-  repository: file://charts/map-config-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-gateway
-  repository: file://charts/treetracker-gateway
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-admin-client
-  repository: file://charts/treetracker-admin-client
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-wallet-app
-  repository: file://charts/treetracker-wallet-app
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: treetracker-web-map-client
-  repository: file://charts/treetracker-web-map-client
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-- name: wallet-monorepo-user-api
-  repository: file://charts/wallet-monorepo-user-api
+- name: service
+  repository: file://charts/service
   version: 0.1.0
-digest: sha256:760457b80044ada9e5c5902c98a726c360e369ace823e5463d2c346368e5f7f1
-generated: "2026-05-31T14:55:58.567398-07:00"
+- name: service
+  repository: file://charts/service
+  version: 0.1.0
+digest: sha256:c2890d4c82224379a897ee2f0b0ac31ec05054c7262b6563e9b669ea7733b7f7
+generated: "2026-05-31T22:03:27.663597-07:00"

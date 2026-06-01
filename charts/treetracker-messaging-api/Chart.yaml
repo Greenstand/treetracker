@@ -1,6 +1,0 @@
-apiVersion: v2
-name: treetracker-messaging-api
-description: Greenstand treetracker-messaging-api
-type: application
-version: 0.1.0
-appVersion: "latest"

@@ -1,6 +1,0 @@
-apiVersion: v2
-name: bulk-pack-consumer
-description: Greenstand bulk-pack-consumer
-type: application
-version: 0.1.0
-appVersion: "latest"

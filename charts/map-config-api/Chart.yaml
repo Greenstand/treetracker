@@ -1,6 +1,0 @@
-apiVersion: v2
-name: map-config-api
-description: Greenstand map-config-api
-type: application
-version: 0.1.0
-appVersion: "latest"

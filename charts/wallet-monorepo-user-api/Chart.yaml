@@ -1,6 +1,0 @@
-apiVersion: v2
-name: wallet-monorepo-user-api
-description: Greenstand wallet-monorepo-user-api
-type: application
-version: 0.1.0
-appVersion: "latest"
