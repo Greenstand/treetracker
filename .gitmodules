@@ -1,0 +1,78 @@
+[submodule "services/treetracker-auth"]
+	path = services/treetracker-auth
+	url = https://github.com/Greenstand/treetracker-auth
+[submodule "services/treetracker-admin-api"]
+	path = services/treetracker-admin-api
+	url = https://github.com/Greenstand/treetracker-admin-api
+[submodule "services/treetracker-field-data"]
+	path = services/treetracker-field-data
+	url = https://github.com/Greenstand/treetracker-field-data
+[submodule "services/treetracker-wallet-api"]
+	path = services/treetracker-wallet-api
+	url = https://github.com/Greenstand/treetracker-wallet-api
+[submodule "services/treetracker-messaging-api"]
+	path = services/treetracker-messaging-api
+	url = https://github.com/Greenstand/treetracker-messaging-api
+[submodule "services/treetracker-stakeholder-api"]
+	path = services/treetracker-stakeholder-api
+	url = https://github.com/Greenstand/treetracker-stakeholder-api
+[submodule "services/treetracker-reporting"]
+	path = services/treetracker-reporting
+	url = https://github.com/Greenstand/treetracker-reporting
+[submodule "services/treetracker-like"]
+	path = services/treetracker-like
+	url = https://github.com/Greenstand/treetracker-like
+[submodule "services/treetracker-api"]
+	path = services/treetracker-api
+	url = https://github.com/Greenstand/treetracker-api
+[submodule "services/treetracker-grower-account-query"]
+	path = services/treetracker-grower-account-query
+	url = https://github.com/Greenstand/treetracker-grower-account-query
+[submodule "services/images-api"]
+	path = services/images-api
+	url = https://github.com/Greenstand/images-api
+[submodule "services/treetracker-map-tile-server"]
+	path = services/treetracker-map-tile-server
+	url = https://github.com/Greenstand/treetracker-map-tile-server
+[submodule "services/treetracker-denormalization"]
+	path = services/treetracker-denormalization
+	url = https://github.com/Greenstand/treetracker-denormalization
+[submodule "services/bulk-pack-consumer"]
+	path = services/bulk-pack-consumer
+	url = https://github.com/Greenstand/bulk-pack-consumer
+[submodule "services/bulk-pack-transformer"]
+	path = services/bulk-pack-transformer
+	url = https://github.com/Greenstand/bulk-pack-transformer
+[submodule "services/bulk-pack-processor"]
+	path = services/bulk-pack-processor
+	url = https://github.com/Greenstand/bulk-pack-processor
+[submodule "services/webmap-query-service-consumer"]
+	path = services/webmap-query-service-consumer
+	url = https://github.com/Greenstand/webmap-query-service-consumer
+[submodule "services/treetracker-query-api"]
+	path = services/treetracker-query-api
+	url = https://github.com/Greenstand/treetracker-query-api
+[submodule "services/map-config-api"]
+	path = services/map-config-api
+	url = https://github.com/Greenstand/map-config-api
+[submodule "services/treetracker-admin-client"]
+	path = services/treetracker-admin-client
+	url = https://github.com/Greenstand/treetracker-admin-client
+[submodule "services/treetracker-wallet-app"]
+	path = services/treetracker-wallet-app
+	url = https://github.com/Greenstand/treetracker-wallet-app
+[submodule "services/treetracker-web-map-client"]
+	path = services/treetracker-web-map-client
+	url = https://github.com/Greenstand/treetracker-web-map-client
+[submodule "services/treetracker-earnings-api"]
+	path = services/treetracker-earnings-api
+	url = https://github.com/Greenstand/treetracker-earnings-api
+[submodule "services/treetracker-regions-api"]
+	path = services/treetracker-regions-api
+	url = https://github.com/Greenstand/treetracker-regions-api
+[submodule "services/treetracker-contract-api"]
+	path = services/treetracker-contract-api
+	url = https://github.com/Greenstand/treetracker-contract-api
+[submodule "services/treetracker-web-map-api"]
+	path = services/treetracker-web-map-api
+	url = https://github.com/Greenstand/treetracker-web-map-api

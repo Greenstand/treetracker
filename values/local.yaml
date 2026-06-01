@@ -1,0 +1,177 @@
+# values/local.yaml — local k3s overrides
+
+postgres:
+  primary:
+    persistence:
+      size: 2Gi
+  readReplicas:
+    replicaCount: 0
+
+localstack:
+  enabled: true
+  # Use the OSS image pinned to 3.x; v4+ / date-versioned releases require a license.
+  image:
+    repository: localstack/localstack
+    tag: "3.8.1"
+  startServices: "s3,sqs,sns"
+  persistence:
+    enabled: false
+  resources:
+    limits:
+      memory: 512Mi
+
+rabbitmq:
+  enabled: true
+
+# Disabled locally — not needed for service dev and reduce Helm release Secret size.
+airflow:
+  enabled: false
+cert-manager:
+  enabled: false
+keycloak:
+  enabled: false
+sealed-secrets:
+  enabled: false
+# Ambassador/Emissary Ingress is amd64-only; its apiext pod crashes on Apple Silicon
+# (arm64) under QEMU emulation. k3d bundles Traefik for ingress on local.
+ambassador:
+  enabled: false
+
+aws:
+  endpoint: "http://greenstand-localstack:4566"
+  region: us-east-1
+  accessKeyId: test
+  secretAccessKey: test
+
+# --- All services: 1 replica locally ---
+treetracker-auth:
+  replicaCount: 1
+treetracker-admin-api:
+  replicaCount: 1
+treetracker-field-data:
+  replicaCount: 1
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: DATABASE_URL_LEGACYDB
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+    - name: RABBIT_MQ_URL
+      value: "amqp://treetracker:treetracker@greenstand-rabbitmq:5672"
+treetracker-wallet-api:
+  replicaCount: 1
+  env:
+    - name: PRIVATE_KEY
+      value: "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCmfQbiiUiRsSx2\nFKRDWkkulf7uDy8NYG7p987fs7kl/xjasCU9LrUgy3PCjFSlOADZGg6BA/KLU6UD\nqznqx6A6VjFWo0tAgHxAzJwEgbwiDTHvdkzu2fJWue8oMQlTuLTfM379roBpwFvL\nzSSQT1y5vKWb6qkoOwEbXFZmBoqg2oUqurXL7UahwSMpdiYLoDaFJPYsB/7NmVt5\nc3Sgkt5/8WamYuqMGBHNwR7smDg7DlK89F+5CrdNaLUlUtAdHwEmZJ4dNRIVHLYo\nYC2WztxYOG0/DCIdTOkkqFXnlkzF5Ssp+v1TZGWf59uQyhuisATlcWGeSUHqTnqY\nlKCwd1blAgMBAAECggEAAwnRCSKexccJ/v31ZcJR1t6whlvS0VAI9WO0MgSyAACv\nWbH46t08CtjpY5sIojyASlFuTHlcqKFd2FAtPtzOBXcY5B/m7CAGDyZMx3drUUUy\n5oClBu1CgN4nw2SO2MF21IQNwzhVsFJIfaIFDLu7wjckHPXG3hdlw/DA3LUVbQMM\nLhkWDbHluRP7WfWxsEd3ozSbHhxgq4dbKWHBnDbB2UTiNoR//LMAnuTvBsX9rEk6\n21QGL18jBmEAVHqZsd2Ttc/1qfTJuiEjLWgyqGzGbuztcXRHHUhzP5/+H46rhHjd\nreUEUVPwz8gLsXbZ4OCPDfGnUT4SmQnzx9+zf7qLjwKBgQDSpxU7eP1O8KXiRyMC\nSAFh4J4jf7MXGYor+APu0WqeigCqO9khImWhXgwqUGCH3b9ISZhJFAidgcC7YhpB\n0KDK9tJq4dEXd0KWZjMjWA5o3rcOsLwrnDbO2xkpUQxCGXj2i0wR/WVl3I/u7S8e\nAi+IFtCuyPPIJMpYjBlJ2dnYZwKBgQDKVBUIbcjlma0JYMX+JOzq/leC87SnjSi8\n+kKE9up9gfIhkTv/ICE5ccZE5zhvK4YcZbotfjPklQtRaYLfe/pPP1VHjv6hoNTv\nyHdHTCN/GiNuytq5aFXXADAYqUQuet2/ifNU8CC8qgUoDyrpdpQKiyJiDKbZ43Im\nuTu5dfH20wKBgQC/GoNBnAa52cm0GXMiO669W+g7LjuLxki6kNsIioWeZHYr+fWG\ngM0QcuC4dojMWZiR/OohygHy2ma92EcX1Cw7VWYZPtnQ3wnSpc7Yzqbr7rjFpAJh\n0etLCCuwdu2W/cLmcALIA0k8+ra9PAHVyIfUf1Y8auP2e6HyaM78V52xGwKBgQCp\nQgfKYlUixhl8c+mOPwO3XoiE8y0Y0bzXwp/tLcZisleFf0Lqnc1NigFsWOXcElQB\n45QJRL9SpOCv/Y1POh7fNsM3tscLHUmlQlWOXoJ/bLVhlO+/FSpiTzTtHIT+QSjK\neDQIxU0Np0njBjVG0zzrSRO9ZIocUuqGvITbFHETowKBgQC7oy/Xrp/cheZtbF1K\ngkNh4OEy/hpSeK5WHyM0RVyM88frJnGog1vdIjwN0QVro8K+HWymHoXPE2Bj7ZxJ\nrM1Ot8iJo/yAPi2Tprly66VEJl/FvPrvt5zVtvA8TMmx4qMxaw1pBMiFz2rrHpQv\ntgfZurJCdyq1Dr8U8sOasoU+2Q==\n-----END PRIVATE KEY-----"
+    - name: PUBLIC_KEY
+      value: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApn0G4olIkbEsdhSkQ1pJ\nLpX+7g8vDWBu6ffO37O5Jf8Y2rAlPS61IMtzwoxUpTgA2RoOgQPyi1OlA6s56seg\nOlYxVqNLQIB8QMycBIG8Ig0x73ZM7tnyVrnvKDEJU7i03zN+/a6AacBby80kkE9c\nubylm+qpKDsBG1xWZgaKoNqFKrq1y+1GocEjKXYmC6A2hST2LAf+zZlbeXN0oJLe\nf/FmpmLqjBgRzcEe7Jg4Ow5SvPRfuQq3TWi1JVLQHR8BJmSeHTUSFRy2KGAtls7c\nWDhtPwwiHUzpJKhV55ZMxeUrKfr9U2Rln+fbkMoborAE5XFhnklB6k56mJSgsHdW\n5QIDAQAB\n-----END PUBLIC KEY-----"
+treetracker-messaging-api:
+  replicaCount: 1
+treetracker-stakeholder-api:
+  replicaCount: 1
+treetracker-reporting:
+  replicaCount: 1
+treetracker-earnings-api:
+  replicaCount: 1
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+# treetracker-like: build skipped — Dockerfile references apps/like/prisma/schema.prisma which is absent
+treetracker-like:
+  replicaCount: 0
+treetracker-api:
+  replicaCount: 1
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: RABBIT_MQ_URL
+      value: "amqp://treetracker:treetracker@greenstand-rabbitmq:5672"
+treetracker-grower-account-query:
+  replicaCount: 1
+images-api:
+  replicaCount: 1
+# treetracker-tile-server: build skipped — npm dep uses GitHub URL with submodule git pointer issue
+treetracker-tile-server:
+  replicaCount: 0
+# treetracker-tile-server-next: no local source / Docker Hub image is private
+treetracker-tile-server-next:
+  replicaCount: 0
+treetracker-denormalization:
+  replicaCount: 1
+bulk-pack-consumer:
+  replicaCount: 1
+  # Chart uses SQS_QUEUE_URL but service reads SQS_URL
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+    - name: S3_BUCKET
+      value: "treetracker-bulk-pack-local"
+    - name: SQS_URL
+      value: "http://greenstand-localstack:4566/000000000000/treetracker-bulk-pack"
+bulk-pack-transformer:
+  replicaCount: 1
+bulk-pack-transformer-v2:
+  replicaCount: 1
+bulk-pack-processor:
+  replicaCount: 1
+  # Service reads DATA_INPUT_DB_URL, not DATABASE_URL
+  env:
+    - name: DATA_INPUT_DB_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: DATA_INPUT_SERVICE_URL
+      value: "http://greenstand-treetracker-field-data"
+    - name: DATA_INPUT_SERVICE_URL_V2
+      value: "http://greenstand-treetracker-field-data"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+webmap-query-service-consumer:
+  replicaCount: 1
+treetracker-query-api:
+  replicaCount: 1
+postgrest:
+  replicaCount: 1
+map-config-api:
+  replicaCount: 1
+treetracker-contract-api:
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+treetracker-regions-api:
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+# treetracker-gateway: no local source, Docker Hub image is private
+treetracker-gateway:
+  replicaCount: 0
+# treetracker-admin-client: no Dockerfile in submodule
+treetracker-admin-client:
+  replicaCount: 0
+# treetracker-wallet-app: no Dockerfile in submodule
+treetracker-wallet-app:
+  replicaCount: 0
+treetracker-web-map-client:
+  replicaCount: 1
+# wallet-monorepo-user-api: no local source, Docker Hub image is private
+wallet-monorepo-user-api:
+  replicaCount: 0

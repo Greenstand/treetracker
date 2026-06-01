@@ -1,0 +1,23 @@
+# Patterns to ignore when building packages.
+# This supports shell glob matching, relative path matching, and
+# negation (prefixed with !). Only one pattern per line.
+.DS_Store
+# Common VCS dirs
+.git/
+.gitignore
+.gitmodules
+# Common backup files
+*.swp
+*.bak
+*.tmp
+*~
+# Non-chart directories — these are included by default but bloat the Helm
+# release Secret (which has a 3MB Kubernetes API limit) past the limit.
+services/
+scripts/
+docs/
+e2e/
+.helm-docker-config/
+skaffold.yaml
+README.md
+*.md

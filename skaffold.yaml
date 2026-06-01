@@ -1,0 +1,335 @@
+apiVersion: skaffold/v4beta9
+kind: Config
+metadata:
+  name: greenstand
+
+profiles:
+  - name: treetracker-auth
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-auth
+          context: services/treetracker-auth
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-auth.image.repository: localhost:5000/treetracker-auth
+              treetracker-auth.image.tag: "{{.IMAGE_TAG_treetracker_auth}}"
+
+  - name: treetracker-admin-api
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-admin-api
+          context: services/treetracker-admin-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-admin-api.image.repository: localhost:5000/treetracker-admin-api
+              treetracker-admin-api.image.tag: "{{.IMAGE_TAG_treetracker_admin_api}}"
+
+  - name: treetracker-field-data
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-field-data
+          context: services/treetracker-field-data
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-field-data.image.repository: localhost:5000/treetracker-field-data
+              treetracker-field-data.image.tag: "{{.IMAGE_TAG_treetracker_field_data}}"
+
+  - name: treetracker-wallet-api
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-wallet-api
+          context: services/treetracker-wallet-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-wallet-api.image.repository: localhost:5000/treetracker-wallet-api
+              treetracker-wallet-api.image.tag: "{{.IMAGE_TAG_treetracker_wallet_api}}"
+
+  - name: treetracker-messaging-api
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-messaging-api
+          context: services/treetracker-messaging-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-messaging-api.image.repository: localhost:5000/treetracker-messaging-api
+              treetracker-messaging-api.image.tag: "{{.IMAGE_TAG_treetracker_messaging_api}}"
+
+  - name: treetracker-stakeholder-api
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-stakeholder-api
+          context: services/treetracker-stakeholder-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-stakeholder-api.image.repository: localhost:5000/treetracker-stakeholder-api
+              treetracker-stakeholder-api.image.tag: "{{.IMAGE_TAG_treetracker_stakeholder_api}}"
+
+  - name: treetracker-reporting
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-reporting
+          context: services/treetracker-reporting
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-reporting.image.repository: localhost:5000/treetracker-reporting
+              treetracker-reporting.image.tag: "{{.IMAGE_TAG_treetracker_reporting}}"
+
+  - name: treetracker-like
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-like
+          context: services/treetracker-like
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-like.image.repository: localhost:5000/treetracker-like
+              treetracker-like.image.tag: "{{.IMAGE_TAG_treetracker_like}}"
+
+  - name: treetracker-api
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-api
+          context: services/treetracker-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-api.image.repository: localhost:5000/treetracker-api
+              treetracker-api.image.tag: "{{.IMAGE_TAG_treetracker_api}}"
+
+  - name: treetracker-grower-account-query
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-grower-account-query
+          context: services/treetracker-grower-account-query
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-grower-account-query.image.repository: localhost:5000/treetracker-grower-account-query
+              treetracker-grower-account-query.image.tag: "{{.IMAGE_TAG_treetracker_grower_account_query}}"
+
+  - name: images-api
+    build:
+      artifacts:
+        - image: localhost:5000/images-api
+          context: services/images-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              images-api.image.repository: localhost:5000/images-api
+              images-api.image.tag: "{{.IMAGE_TAG_images_api}}"
+
+  - name: treetracker-map-tile-server
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-map-tile-server
+          context: services/treetracker-map-tile-server
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-tile-server.image.repository: localhost:5000/treetracker-map-tile-server
+              treetracker-tile-server.image.tag: "{{.IMAGE_TAG_treetracker_map_tile_server}}"
+
+  - name: treetracker-denormalization
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-denormalization
+          context: services/treetracker-denormalization
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-denormalization.image.repository: localhost:5000/treetracker-denormalization
+              treetracker-denormalization.image.tag: "{{.IMAGE_TAG_treetracker_denormalization}}"
+
+  - name: bulk-pack-consumer
+    build:
+      artifacts:
+        - image: localhost:5000/bulk-pack-consumer
+          context: services/bulk-pack-consumer
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              bulk-pack-consumer.image.repository: localhost:5000/bulk-pack-consumer
+              bulk-pack-consumer.image.tag: "{{.IMAGE_TAG_bulk_pack_consumer}}"
+
+  - name: bulk-pack-transformer
+    build:
+      artifacts:
+        - image: localhost:5000/bulk-pack-transformer
+          context: services/bulk-pack-transformer
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              bulk-pack-transformer.image.repository: localhost:5000/bulk-pack-transformer
+              bulk-pack-transformer.image.tag: "{{.IMAGE_TAG_bulk_pack_transformer}}"
+
+  - name: bulk-pack-processor
+    build:
+      artifacts:
+        - image: localhost:5000/bulk-pack-processor
+          context: services/bulk-pack-processor
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              bulk-pack-processor.image.repository: localhost:5000/bulk-pack-processor
+              bulk-pack-processor.image.tag: "{{.IMAGE_TAG_bulk_pack_processor}}"
+
+  - name: webmap-query-service-consumer
+    build:
+      artifacts:
+        - image: localhost:5000/webmap-query-service-consumer
+          context: services/webmap-query-service-consumer
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              webmap-query-service-consumer.image.repository: localhost:5000/webmap-query-service-consumer
+              webmap-query-service-consumer.image.tag: "{{.IMAGE_TAG_webmap_query_service_consumer}}"
+
+  - name: treetracker-query-api
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-query-api
+          context: services/treetracker-query-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-query-api.image.repository: localhost:5000/treetracker-query-api
+              treetracker-query-api.image.tag: "{{.IMAGE_TAG_treetracker_query_api}}"
+
+  - name: map-config-api
+    build:
+      artifacts:
+        - image: localhost:5000/map-config-api
+          context: services/map-config-api
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              map-config-api.image.repository: localhost:5000/map-config-api
+              map-config-api.image.tag: "{{.IMAGE_TAG_map_config_api}}"
+
+  - name: treetracker-admin-client
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-admin-client
+          context: services/treetracker-admin-client
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-admin-client.image.repository: localhost:5000/treetracker-admin-client
+              treetracker-admin-client.image.tag: "{{.IMAGE_TAG_treetracker_admin_client}}"
+
+  - name: treetracker-wallet-app
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-wallet-app
+          context: services/treetracker-wallet-app
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-wallet-app.image.repository: localhost:5000/treetracker-wallet-app
+              treetracker-wallet-app.image.tag: "{{.IMAGE_TAG_treetracker_wallet_app}}"
+
+  - name: treetracker-web-map-client
+    build:
+      artifacts:
+        - image: localhost:5000/treetracker-web-map-client
+          context: services/treetracker-web-map-client
+    deploy:
+      helm:
+        releases:
+          - name: greenstand
+            chartPath: .
+            valuesFiles: [values/local.yaml]
+            setValueTemplates:
+              treetracker-web-map-client.image.repository: localhost:5000/treetracker-web-map-client
+              treetracker-web-map-client.image.tag: "{{.IMAGE_TAG_treetracker_web_map_client}}"

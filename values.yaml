@@ -1,0 +1,414 @@
+postgres:
+  enabled: true
+  auth:
+    database: treetracker
+    username: treetracker
+    password: treetracker
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+localstack:
+  enabled: false
+
+airflow:
+  enabled: true
+  executor: LocalExecutor
+  webserverSecretKey: "change-me-in-production"
+
+  scheduler:
+    replicas: 1
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+
+  webserver:
+    replicas: 1
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+
+  workers:
+    replicas: 0
+
+  flower:
+    enabled: false
+
+  redis:
+    enabled: false
+
+  pgbouncer:
+    enabled: false
+
+  statsd:
+    enabled: false
+
+  postgresql:
+    enabled: false
+
+  data:
+    metadataConnection:
+      user: treetracker
+      pass: treetracker
+      host: greenstand-postgres
+      port: 5432
+      db: airflow
+      protocol: postgresql
+
+  dags:
+    gitSync:
+      enabled: false
+    persistence:
+      enabled: false
+
+  logs:
+    persistence:
+      enabled: false
+
+cert-manager:
+  enabled: true
+  installCRDs: true
+
+ambassador:
+  enabled: true
+
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: admin
+
+sealed-secrets:
+  enabled: true
+
+# --- Application Services ---
+# Each entry corresponds to an alias in Chart.yaml pointing at charts/service.
+# Override image.repository and env here; local overrides go in values/local.yaml.
+
+treetracker-auth:
+  nameOverride: treetracker-auth
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-auth
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: KEYCLOAK_URL
+      value: "http://greenstand-keycloak:8080"
+
+treetracker-admin-api:
+  nameOverride: treetracker-admin-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-admin-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AUTH_URL
+      value: "http://greenstand-treetracker-auth:80"
+
+treetracker-field-data:
+  nameOverride: treetracker-field-data
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-field-data
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+
+treetracker-wallet-api:
+  nameOverride: treetracker-wallet-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-wallet-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: KEYCLOAK_URL
+      value: "http://greenstand-keycloak:8080"
+
+treetracker-messaging-api:
+  nameOverride: treetracker-messaging-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-messaging-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-stakeholder-api:
+  nameOverride: treetracker-stakeholder-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-stakeholder-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-reporting:
+  nameOverride: treetracker-reporting
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-reporting
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-like:
+  nameOverride: treetracker-like
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-like
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-api:
+  nameOverride: treetracker-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-earnings-api:
+  nameOverride: treetracker-earnings-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-earnings-api
+
+treetracker-grower-account-query:
+  nameOverride: treetracker-grower-account-query
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-grower-account-query
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+images-api:
+  nameOverride: images-api
+  replicaCount: 2
+  image:
+    repository: greenstand/images-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+    - name: S3_BUCKET
+      value: "treetracker-images-local"
+
+treetracker-tile-server:
+  nameOverride: treetracker-tile-server
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-map-tile-server
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-tile-server-next:
+  nameOverride: treetracker-tile-server-next
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-map-tile-server
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-denormalization:
+  nameOverride: treetracker-denormalization
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-denormalization
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+bulk-pack-consumer:
+  nameOverride: bulk-pack-consumer
+  replicaCount: 2
+  image:
+    repository: greenstand/bulk-pack-consumer
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+    - name: S3_BUCKET
+      value: "treetracker-bulk-pack-local"
+    - name: SQS_QUEUE_URL
+      value: "http://greenstand-localstack:4566/000000000000/treetracker-bulk-pack"
+
+bulk-pack-transformer:
+  nameOverride: bulk-pack-transformer
+  replicaCount: 2
+  image:
+    repository: greenstand/bulk-pack-transformer
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+
+bulk-pack-transformer-v2:
+  nameOverride: bulk-pack-transformer-v2
+  replicaCount: 2
+  image:
+    repository: greenstand/bulk-pack-transformer
+
+bulk-pack-processor:
+  nameOverride: bulk-pack-processor
+  replicaCount: 2
+  image:
+    repository: greenstand/bulk-pack-processor
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: AWS_ENDPOINT
+      value: "http://greenstand-localstack:4566"
+    - name: AWS_REGION
+      value: "us-east-1"
+    - name: AWS_ACCESS_KEY_ID
+      value: "test"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "test"
+
+webmap-query-service-consumer:
+  nameOverride: webmap-query-service-consumer
+  replicaCount: 2
+  image:
+    repository: greenstand/webmap-query-service-consumer
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-query-api:
+  nameOverride: treetracker-query-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-query-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+postgrest:
+  nameOverride: postgrest
+  replicaCount: 2
+  image:
+    repository: postgrest/postgrest
+    tag: v12.0.2
+  env:
+    - name: PGRST_DB_URI
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: PGRST_DB_SCHEMA
+      value: "public"
+    - name: PGRST_DB_ANON_ROLE
+      value: "treetracker"
+    - name: PGRST_SERVER_PORT
+      value: "3000"
+
+map-config-api:
+  nameOverride: map-config-api
+  replicaCount: 2
+  image:
+    repository: greenstand/map-config-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-gateway:
+  nameOverride: treetracker-gateway
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-gateway
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+
+treetracker-admin-client:
+  nameOverride: treetracker-admin-client
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-admin-client
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  env:
+    - name: REACT_APP_API_ROOT
+      value: "http://greenstand-treetracker-admin-api:80"
+
+treetracker-wallet-app:
+  nameOverride: treetracker-wallet-app
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-wallet-app
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  env:
+    - name: REACT_APP_WALLET_API_ROOT
+      value: "http://greenstand-treetracker-wallet-api:80"
+
+treetracker-web-map-client:
+  nameOverride: treetracker-web-map-client
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-web-map-client
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  env:
+    - name: REACT_APP_QUERY_API_ROOT
+      value: "http://greenstand-treetracker-query-api:80"
+    - name: REACT_APP_MAP_CONFIG_API
+      value: "http://greenstand-map-config-api:80"
+
+wallet-monorepo-user-api:
+  nameOverride: wallet-monorepo-user-api
+  replicaCount: 2
+  image:
+    repository: greenstand/treetracker-wallet-monorepo-user-api
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://treetracker:treetracker@greenstand-postgres:5432/treetracker"
+    - name: KEYCLOAK_URL
+      value: "http://greenstand-keycloak:8080"

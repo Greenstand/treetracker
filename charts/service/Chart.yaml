@@ -1,0 +1,5 @@
+apiVersion: v2
+name: service
+description: Reusable Greenstand microservice chart — deployed once per alias
+type: application
+version: 0.1.0
