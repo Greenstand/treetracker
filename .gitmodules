@@ -19,3 +19,6 @@
 [submodule "treetracker-admin-api"]
 	path = treetracker-admin-api
 	url = git@github.com:Greenstand/treetracker-admin-api.git
+[submodule "treetracker-wallet-api"]
+	path = treetracker-wallet-api
+	url = git@github.com:Greenstand/treetracker-wallet-api.git
