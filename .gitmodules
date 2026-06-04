@@ -16,3 +16,6 @@
 [submodule "treetracker-web-map-client"]
 	path = treetracker-web-map-client
 	url = git@github.com:Greenstand/treetracker-web-map-client.git
+[submodule "treetracker-admin-api"]
+	path = treetracker-admin-api
+	url = git@github.com:Greenstand/treetracker-admin-api.git
