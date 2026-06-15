@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ActionBar } from "../components/ActionBar";
+import { Screen, TopBar } from "../components/Layout";
+import { DepthTextButton } from "../components/DepthButton";
+import { BorderedTextField } from "../components/BorderedTextField";
 import { S } from "../strings";
 import { Nav } from "../navigation";
 import { setSignupName } from "../signupDraft";
@@ -12,20 +15,30 @@ export default function NameScreen() {
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
 
+  const langButton = (
+    <DepthTextButton
+      label="ENGLISH"
+      width={120}
+      height={50}
+      onPress={() => nav.navigate("Language")}
+    />
+  );
+
   return (
-    <View style={styles.root}>
+    <Screen>
+      <TopBar right={langButton} />
       <View style={styles.body}>
-        <Text style={styles.label}>{S.firstName}</Text>
-        <TextInput
+        <BorderedTextField
           style={styles.input}
           placeholder={S.firstName}
+          autoCorrect={false}
           value={first}
           onChangeText={setFirst}
         />
-        <Text style={styles.label}>{S.lastName}</Text>
-        <TextInput
+        <BorderedTextField
           style={styles.input}
           placeholder={S.lastName}
+          autoCorrect={false}
           value={last}
           onChangeText={setLast}
         />
@@ -38,19 +51,11 @@ export default function NameScreen() {
           nav.navigate("Selfie");
         }}
       />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff" },
-  body: { flex: 1, padding: 24, paddingTop: 60, gap: 12 },
-  label: { fontSize: 18, fontWeight: "600", color: "#1B5E20" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
-  },
+  body: { flex: 1, justifyContent: "center" },
+  input: { marginHorizontal: 4, marginVertical: 4 },
 });

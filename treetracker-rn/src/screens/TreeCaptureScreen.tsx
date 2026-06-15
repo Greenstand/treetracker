@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Location from "expo-location";
-import { ActionBar } from "../components/ActionBar";
+import { Screen } from "../components/Layout";
+import { ArrowButton, CaptureButton, InfoButton } from "../components/DepthButton";
+import { AppColors } from "../theme";
 import { S } from "../strings";
 import { Nav, Rt } from "../navigation";
 
-// Tree capture. The "Take tree photo" button is location-gated: disabled until a
-// GPS fix is available (the emulator fix is seeded by the e2e via setGeolocation).
+// Tree capture. "Take tree photo" is location-gated: disabled until a GPS fix is
+// available (the emulator fix is seeded by the e2e via setGeolocation).
 export default function TreeCaptureScreen() {
   const nav = useNavigation<Nav<"TreeCapture">>();
   const route = useRoute<Rt<"TreeCapture">>();
@@ -60,47 +62,45 @@ export default function TreeCaptureScreen() {
     });
   }
 
-  const enabled = !!coords;
-
   return (
-    <View style={styles.root}>
-      {perm?.granted ? (
-        <CameraView ref={camRef} style={styles.cam} facing="back" />
-      ) : (
-        <View style={[styles.cam, styles.placeholder]}>
-          <Text style={{ color: "#fff" }}>Camera</Text>
-        </View>
-      )}
-      <View style={styles.controls}>
-        <Pressable
-          accessibilityLabel={S.takeTreePhoto}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !enabled }}
-          disabled={!enabled}
-          onPress={capture}
-          style={[styles.shutter, !enabled && styles.disabled]}
-        />
+    <Screen>
+      <View style={styles.camWrap}>
+        {perm?.granted ? (
+          <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing="back" />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.placeholder]} />
+        )}
       </View>
-      <ActionBar
-        onBack={() => nav.navigate("Dashboard")}
-        forwardEnabled={false}
-      />
-    </View>
+      <View style={styles.bottomBar}>
+        <View style={styles.cell}>
+          <ArrowButton isLeft onPress={() => nav.navigate("Dashboard")} />
+        </View>
+        <View style={[styles.cell, styles.center]}>
+          <CaptureButton
+            accessibilityLabel={S.takeTreePhoto}
+            enabled={!!coords}
+            onPress={capture}
+          />
+        </View>
+        <View style={[styles.cell, styles.right]}>
+          <InfoButton onPress={() => {}} />
+        </View>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#000" },
-  cam: { flex: 1 },
-  placeholder: { alignItems: "center", justifyContent: "center" },
-  controls: { alignItems: "center", paddingVertical: 20, backgroundColor: "#000" },
-  shutter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#fff",
-    borderWidth: 4,
-    borderColor: "#2E7D32",
+  camWrap: { flex: 1, overflow: "hidden" },
+  placeholder: { backgroundColor: "#000" },
+  bottomBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 80,
+    paddingHorizontal: 4,
+    backgroundColor: AppColors.Gray,
   },
-  disabled: { opacity: 0.4 },
+  cell: { flex: 1, justifyContent: "center" },
+  center: { alignItems: "center" },
+  right: { alignItems: "flex-end" },
 });

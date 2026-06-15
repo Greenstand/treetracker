@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import {
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Image, Modal, StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { Screen } from "../components/Layout";
+import {
+  ApprovalButton,
+  DepthButton,
+  InfoButton,
+} from "../components/DepthButton";
+import { BorderedTextField } from "../components/BorderedTextField";
+import { AppColors, ButtonColors, Fonts, TextColors } from "../theme";
 import { S } from "../strings";
 import { Nav, Rt } from "../navigation";
 import { addCapture } from "../store";
@@ -41,129 +41,131 @@ export default function TreeImageReviewScreen() {
   }
 
   return (
-    <View style={styles.root}>
-      {photoUri ? (
-        <Image source={{ uri: photoUri }} style={styles.img} />
-      ) : (
-        <View style={[styles.img, styles.placeholder]}>
-          <Text style={{ color: "#fff" }}>Tree</Text>
+    <Screen>
+      {/* top bar with NOTE button */}
+      <View style={styles.topBar}>
+        <View style={styles.cell} />
+        <View style={[styles.cell, styles.center]}>
+          <DepthButton
+            colors={ButtonColors.Default}
+            width={100}
+            height={56}
+            onPress={() => {
+              setDraftNote(note);
+              setNoteOpen(true);
+            }}>
+            <Text style={styles.noteLabel}>{S.note}</Text>
+          </DepthButton>
         </View>
-      )}
+        <View style={styles.cell} />
+      </View>
 
-      <Pressable
-        onPress={() => {
-          setDraftNote(note);
-          setNoteOpen(true);
-        }}
-        style={styles.noteBtn}>
-        <Text style={styles.noteBtnText}>{S.note}</Text>
-      </Pressable>
+      <View style={styles.imageWrap}>
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} style={styles.img} />
+        ) : (
+          <View style={[styles.img, styles.placeholder]} />
+        )}
+      </View>
 
-      <View style={styles.controls}>
-        <Pressable
+      <View style={styles.bottomBar}>
+        <ApprovalButton
+          approval={false}
           accessibilityLabel={S.rejectTree}
-          accessibilityRole="button"
           onPress={() => nav.goBack()}
-          style={[styles.action, styles.reject]}>
-          <Text style={styles.actionText}>{"✕"}</Text>
-        </Pressable>
-        <Pressable
+        />
+        <View style={{ width: 24 }} />
+        <ApprovalButton
+          approval
           accessibilityLabel={S.approveTree}
-          accessibilityRole="button"
           onPress={approve}
-          style={[styles.action, styles.approve]}>
-          <Text style={styles.actionText}>{"✓"}</Text>
-        </Pressable>
+        />
+        <View style={{ width: 24 }} />
+        <InfoButton onPress={() => {}} />
       </View>
 
       <Modal visible={noteOpen} transparent animationType="fade">
         <View style={styles.modalWrap}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>{S.addNoteToTree}</Text>
-            <TextInput
+            <BorderedTextField
               style={styles.input}
-              placeholder="Your note"
+              placeholder=""
               value={draftNote}
               onChangeText={setDraftNote}
-              autoFocus
             />
             <View style={styles.dialogButtons}>
-              <Pressable
+              <ApprovalButton
+                approval={false}
+                size={40}
+                accessibilityLabel="Cancel note"
                 onPress={() => setNoteOpen(false)}
-                style={styles.dialogBtn}>
-                <Text style={styles.dialogBtnText}>Cancel</Text>
-              </Pressable>
-              <Pressable
+              />
+              <View style={{ width: 24 }} />
+              <ApprovalButton
+                approval
+                size={40}
                 accessibilityLabel={S.saveNote}
-                accessibilityRole="button"
                 onPress={() => {
                   setNote(draftNote);
                   setNoteOpen(false);
                 }}
-                style={styles.dialogBtn}>
-                <Text style={styles.dialogBtnText}>Save</Text>
-              </Pressable>
+              />
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#000" },
-  img: { flex: 1, resizeMode: "cover" },
-  placeholder: { alignItems: "center", justifyContent: "center" },
-  noteBtn: {
-    position: "absolute",
-    top: 40,
-    alignSelf: "center",
-    backgroundColor: "#2E7D32",
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  noteBtnText: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  controls: {
+  topBar: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 24,
-    backgroundColor: "#000",
-  },
-  action: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
     alignItems: "center",
-    justifyContent: "center",
+    height: 80,
+    paddingHorizontal: 4,
   },
-  reject: { backgroundColor: "#B71C1C" },
-  approve: { backgroundColor: "#2E7D32" },
-  actionText: { color: "#fff", fontSize: 28, fontWeight: "bold" },
+  cell: { flex: 1, justifyContent: "center" },
+  center: { alignItems: "center" },
+  noteLabel: {
+    color: TextColors.primaryText,
+    fontSize: 14,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+  },
+  imageWrap: { flex: 1 },
+  img: { flex: 1, resizeMode: "contain" },
+  placeholder: { backgroundColor: "#000" },
+  bottomBar: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+    backgroundColor: AppColors.Gray,
+  },
   modalWrap: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
   dialog: {
     width: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: AppColors.Gray,
     borderRadius: 12,
-    padding: 20,
-    gap: 16,
-  },
-  dialogTitle: { fontSize: 18, fontWeight: "700", color: "#1B5E20" },
-  input: {
     borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
+    borderColor: AppColors.Green,
+    padding: 20,
   },
-  dialogButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 20 },
-  dialogBtn: { paddingHorizontal: 12, paddingVertical: 8 },
-  dialogBtnText: { fontSize: 16, color: "#2E7D32", fontWeight: "700" },
+  dialogTitle: {
+    color: TextColors.primaryText,
+    fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+    marginBottom: 12,
+  },
+  input: { marginBottom: 16 },
+  dialogButtons: { flexDirection: "row", justifyContent: "center" },
 });

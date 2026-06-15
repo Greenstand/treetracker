@@ -1,15 +1,24 @@
 import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ActionBar } from "../components/ActionBar";
+import { Screen, TopBar } from "../components/Layout";
+import {
+  ApprovalButton,
+  DepthButton,
+  DepthTextButton,
+} from "../components/DepthButton";
+import { BorderedTextField } from "../components/BorderedTextField";
+import { AppColors, ButtonColors, Fonts, TextColors } from "../theme";
 import { S } from "../strings";
 import { Nav } from "../navigation";
 import { setSignupCredential } from "../signupDraft";
 
-// Privacy policy + credential (PHONE/EMAIL) entry. Mirrors CredentialEntryView.
+// Privacy policy dialog (on entry) + credential (PHONE/EMAIL) entry.
+// Mirrors Android CredentialEntryView.
 export default function CredentialScreen() {
   const nav = useNavigation<Nav<"Credential">>();
-  const [accepted, setAccepted] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(true);
   const [type, setType] = useState<"PHONE" | "EMAIL">("PHONE");
   const [value, setValue] = useState("");
 
@@ -18,77 +27,139 @@ export default function CredentialScreen() {
       ? value.replace(/\D/g, "").length >= 7
       : value.includes("@");
 
-  return (
-    <View style={styles.root}>
-      <View style={styles.body}>
-        <Text style={styles.title}>{S.privacyPolicy}</Text>
-        <Pressable
-          accessibilityLabel={S.acceptPrivacyPolicy}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: accepted }}
-          onPress={() => setAccepted((a) => !a)}
-          style={styles.accept}>
-          <Text style={styles.acceptText}>
-            {accepted ? "☑" : "☐"}  I accept the Privacy Policy
-          </Text>
-        </Pressable>
+  // Language button on the right of the top bar (matches Android).
+  const langButton = (
+    <DepthTextButton
+      label="ENGLISH"
+      width={120}
+      height={50}
+      onPress={() => nav.navigate("Language")}
+    />
+  );
 
+  return (
+    <Screen>
+      <TopBar right={langButton} />
+
+      <View style={styles.body}>
         <View style={styles.toggleRow}>
-          <Pressable
-            onPress={() => setType("PHONE")}
-            style={[styles.toggle, type === "PHONE" && styles.toggleSel]}>
+          <DepthButton
+            colors={ButtonColors.ProgressGreen}
+            width={120}
+            height={50}
+            style={{ marginRight: 12 }}
+            onPress={() => setType("PHONE")}>
             <Text style={styles.toggleText}>{S.phone}</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setType("EMAIL")}
-            style={[styles.toggle, type === "EMAIL" && styles.toggleSel]}>
+          </DepthButton>
+          <DepthButton
+            colors={ButtonColors.ProgressGreen}
+            width={120}
+            height={50}
+            onPress={() => setType("EMAIL")}>
             <Text style={styles.toggleText}>{S.email}</Text>
-          </Pressable>
+          </DepthButton>
         </View>
 
-        <TextInput
+        <BorderedTextField
           style={styles.input}
           placeholder={type === "PHONE" ? S.phoneHint : S.emailHint}
           keyboardType={type === "PHONE" ? "phone-pad" : "email-address"}
           autoCapitalize="none"
+          autoCorrect={false}
           value={value}
           onChangeText={setValue}
         />
       </View>
-      <ActionBar
-        onBack={() => nav.goBack()}
-        forwardEnabled={accepted && valid}
-        onForward={() => {
-          setSignupCredential(type, value);
-          nav.navigate("Name");
-        }}
-      />
-    </View>
+
+      {!showPrivacy && (
+        <ActionBar
+          onBack={() => nav.goBack()}
+          forwardEnabled={valid}
+          onForward={() => {
+            setSignupCredential(type, value);
+            nav.navigate("Name");
+          }}
+        />
+      )}
+
+      {showPrivacy && (
+        <View style={styles.privacyOverlay}>
+          <View style={styles.privacyCard}>
+            <Text style={styles.privacyTitle}>{S.privacyPolicy}</Text>
+            <ScrollView style={styles.privacyBody}>
+              <Text style={styles.privacyText}>
+                Greenstand respects your privacy. The information you provide is
+                used only to associate the trees you capture with your account
+                and is handled according to the Greenstand privacy policy. Tap
+                the green button below to accept and continue.
+              </Text>
+            </ScrollView>
+            <View style={styles.privacyAccept}>
+              <ApprovalButton
+                approval
+                size={50}
+                accessibilityLabel={S.acceptPrivacyPolicy}
+                onPress={() => setShowPrivacy(false)}
+              />
+            </View>
+          </View>
+        </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff" },
-  body: { flex: 1, padding: 24, paddingTop: 60, gap: 20 },
-  title: { fontSize: 22, fontWeight: "700", color: "#1B5E20" },
-  accept: { paddingVertical: 8 },
-  acceptText: { fontSize: 16 },
-  toggleRow: { flexDirection: "row", gap: 12 },
-  toggle: {
+  body: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#2E7D32",
-    alignItems: "center",
+    paddingHorizontal: 16,
+    justifyContent: "center",
   },
-  toggleSel: { backgroundColor: "#C8E6C9" },
-  toggleText: { fontSize: 18, fontWeight: "600", color: "#1B5E20" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    paddingTop: 10,
+    marginBottom: 16,
   },
+  toggleText: {
+    color: TextColors.darkText,
+    fontSize: 14,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+  },
+  input: { marginHorizontal: 16, marginVertical: 8 },
+  privacyOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: AppColors.Gray,
+    paddingHorizontal: 30,
+    paddingTop: 10,
+    paddingBottom: 40,
+  },
+  privacyCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: AppColors.Green,
+    borderRadius: 12,
+    backgroundColor: AppColors.Gray,
+    padding: 16,
+  },
+  privacyTitle: {
+    color: TextColors.primaryText,
+    fontSize: 24,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+    marginBottom: 12,
+  },
+  privacyBody: { flex: 1 },
+  privacyText: {
+    color: TextColors.lightText,
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: Fonts.regular,
+  },
+  privacyAccept: { alignItems: "center", paddingTop: 16 },
 });

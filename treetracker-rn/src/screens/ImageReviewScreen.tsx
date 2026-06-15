@@ -1,6 +1,8 @@
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { ApprovalButton } from "../components/DepthButton";
+import { AppColors } from "../theme";
 import { S } from "../strings";
 import { Nav, Rt } from "../navigation";
 import { addUser } from "../store";
@@ -33,40 +35,34 @@ export default function ImageReviewScreen() {
       {photoUri ? (
         <Image source={{ uri: photoUri }} style={styles.img} />
       ) : (
-        <View style={[styles.img, styles.placeholder]}>
-          <Text style={{ color: "#fff" }}>Selfie</Text>
-        </View>
+        <View style={[styles.img, styles.placeholder]} />
       )}
       <View style={styles.controls}>
-        <Pressable
+        <ApprovalButton
+          approval={false}
+          accessibilityLabel="Retake photo"
+          onPress={() => nav.goBack()}
+        />
+        <View style={{ width: 24 }} />
+        <ApprovalButton
+          approval
           accessibilityLabel={S.approveSelfie}
-          accessibilityRole="button"
           onPress={approve}
-          style={styles.approve}>
-          <Text style={styles.approveText}>{"✓"}</Text>
-        </Pressable>
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#000" },
-  img: { flex: 1, resizeMode: "cover" },
-  placeholder: { alignItems: "center", justifyContent: "center" },
+  root: { flex: 1, backgroundColor: AppColors.Gray },
+  img: { flex: 1, resizeMode: "contain" },
+  placeholder: { backgroundColor: "#000" },
   controls: {
     flexDirection: "row",
     justifyContent: "center",
-    paddingVertical: 24,
-    backgroundColor: "#000",
-  },
-  approve: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#2E7D32",
     alignItems: "center",
-    justifyContent: "center",
+    paddingVertical: 24,
+    backgroundColor: AppColors.Gray,
   },
-  approveText: { color: "#fff", fontSize: 34, fontWeight: "bold" },
 });

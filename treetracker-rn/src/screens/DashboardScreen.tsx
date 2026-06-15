@@ -1,6 +1,9 @@
 import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Screen, TopBar } from "../components/Layout";
+import { DepthButton, DepthTextButton } from "../components/DepthButton";
+import { AppColors, ButtonColors, Fonts, TextColors } from "../theme";
 import { S } from "../strings";
 import { Nav } from "../navigation";
 import { readyToUpload, uploadedCount, useStore } from "../store";
@@ -8,7 +11,6 @@ import { uploadPending } from "../upload";
 
 export default function DashboardScreen() {
   const nav = useNavigation<Nav<"Dashboard">>();
-  // re-render on store changes
   useStore((s) => s.captures.length + s.uploadedCount);
   const ready = readyToUpload();
   const uploaded = uploadedCount();
@@ -27,54 +29,124 @@ export default function DashboardScreen() {
     }
   }
 
+  const langButton = (
+    <DepthTextButton
+      label="ENGLISH"
+      width={120}
+      height={50}
+      onPress={() => nav.navigate("Language")}
+    />
+  );
+
   return (
-    <View style={styles.root}>
-      <View style={styles.counts}>
-        <View style={styles.countBox}>
-          <Text accessibilityLabel={S.treesReadyToUpload} style={styles.count}>
-            {String(ready)}
-          </Text>
-          <Text style={styles.countCaption}>{S.treesReadyToUpload}</Text>
+    <Screen>
+      <TopBar right={langButton} />
+
+      {/* Trees uploaded counter */}
+      <View style={styles.counterRow}>
+        <Text style={styles.leaf}>🌿</Text>
+        <Text
+          accessibilityLabel={S.treesUploaded}
+          style={styles.uploadedCount}>
+          {String(uploaded)}
+        </Text>
+      </View>
+
+      {/* Upload progress + UPLOAD button */}
+      <View style={styles.uploadRow}>
+        <View style={styles.progressCol}>
+          <View style={styles.ring}>
+            <Text
+              accessibilityLabel={S.treesReadyToUpload}
+              style={styles.readyCount}>
+              {String(ready)}
+            </Text>
+          </View>
         </View>
-        <View style={styles.countBox}>
-          <Text accessibilityLabel={S.treesUploaded} style={styles.count}>
-            {String(uploaded)}
-          </Text>
-          <Text style={styles.countCaption}>{S.treesUploaded}</Text>
+        <View style={styles.uploadBtnCol}>
+          <DepthButton
+            circle
+            colors={ButtonColors.UploadOrange}
+            width={130}
+            height={130}
+            depth={10}
+            onPress={onUpload}>
+            <Text style={styles.uploadLabel}>{S.upload}</Text>
+          </DepthButton>
         </View>
       </View>
 
-      <View style={styles.buttons}>
-        <Pressable style={styles.btn} onPress={onUpload}>
-          <Text style={styles.btnText}>{S.upload}</Text>
-        </Pressable>
-        <Pressable style={styles.btn} onPress={() => {}}>
-          <Text style={styles.btnText}>{S.messages}</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.btn, styles.track]}
-          onPress={() => nav.navigate("UserSelect")}>
-          <Text style={styles.btnText}>{S.track}</Text>
-        </Pressable>
-      </View>
-    </View>
+      {/* MESSAGES */}
+      <DepthButton
+        colors={ButtonColors.MessagePurple}
+        style={styles.bigBtn}
+        onPress={() => {}}>
+        <Text style={styles.bigLabel}>{S.messages}</Text>
+      </DepthButton>
+
+      {/* TRACK */}
+      <DepthButton
+        colors={ButtonColors.ProgressGreen}
+        style={[styles.bigBtn, styles.bigBtnBottom]}
+        onPress={() => nav.navigate("UserSelect")}>
+        <Text style={styles.bigLabel}>{S.track}</Text>
+      </DepthButton>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff", padding: 24, paddingTop: 60 },
-  counts: { flexDirection: "row", justifyContent: "space-around", marginBottom: 40 },
-  countBox: { alignItems: "center" },
-  count: { fontSize: 40, fontWeight: "800", color: "#1B5E20" },
-  countCaption: { fontSize: 13, color: "#555" },
-  buttons: { gap: 18, alignItems: "center" },
-  btn: {
-    width: "80%",
-    paddingVertical: 22,
-    borderRadius: 12,
-    backgroundColor: "#2E7D32",
+  counterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+  },
+  leaf: { fontSize: 26, marginRight: 8 },
+  uploadedCount: {
+    color: TextColors.uploadText,
+    fontSize: 24,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+  },
+  uploadRow: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     alignItems: "center",
   },
-  track: { backgroundColor: "#1B5E20" },
-  btnText: { color: "#fff", fontSize: 22, fontWeight: "700" },
+  progressCol: { flex: 1, alignItems: "center" },
+  ring: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    borderWidth: 8,
+    borderColor: AppColors.Orange,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  readyCount: {
+    color: TextColors.lightText,
+    fontSize: 24,
+    fontFamily: Fonts.regular,
+  },
+  uploadBtnCol: { flex: 1, alignItems: "center" },
+  uploadLabel: {
+    color: TextColors.darkText,
+    fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+  },
+  bigBtn: {
+    flex: 1,
+    marginHorizontal: 20,
+    marginVertical: 10,
+  },
+  bigBtnBottom: { marginBottom: 20 },
+  bigLabel: {
+    color: TextColors.darkText,
+    fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+  },
 });

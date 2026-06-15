@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ActionBar } from "../components/ActionBar";
+import { Screen, TopBar } from "../components/Layout";
+import { BorderedTextField } from "../components/BorderedTextField";
+import { Fonts, TextColors } from "../theme";
 import { S } from "../strings";
 import { Nav, Rt } from "../navigation";
 import { addSession } from "../store";
@@ -24,30 +27,31 @@ export default function AddOrgScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <Screen>
+      <TopBar />
       <View style={styles.body}>
         <Text style={styles.label}>{S.organization}</Text>
-        <TextInput
+        <BorderedTextField
           style={styles.input}
-          placeholder={S.organizationHint}
+          placeholder={S.organization}
+          autoCorrect={false}
           value={org}
           onChangeText={setOrg}
         />
       </View>
       <ActionBar onBack={() => nav.goBack()} onForward={next} />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff" },
-  body: { flex: 1, padding: 24, paddingTop: 60, gap: 12 },
-  label: { fontSize: 18, fontWeight: "600", color: "#1B5E20" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#999",
-    borderRadius: 8,
-    padding: 14,
+  body: { flex: 1, paddingHorizontal: 24, paddingTop: 60 },
+  label: {
+    color: TextColors.primaryText,
     fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: Fonts.bold,
+    marginBottom: 8,
   },
+  input: { alignSelf: "stretch" },
 });

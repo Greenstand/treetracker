@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { ActionBar } from "../components/ActionBar";
+import { Screen, TopBar } from "../components/Layout";
+import { CaptureButton, InfoButton } from "../components/DepthButton";
+import { AppColors } from "../theme";
 import { S } from "../strings";
 import { Nav } from "../navigation";
 
@@ -27,38 +29,42 @@ export default function SelfieScreen() {
   }
 
   return (
-    <View style={styles.root}>
-      {perm?.granted ? (
-        <CameraView ref={camRef} style={styles.cam} facing="front" />
-      ) : (
-        <View style={[styles.cam, styles.placeholder]}>
-          <Text style={{ color: "#fff" }}>Camera</Text>
+    <Screen>
+      <TopBar />
+      <View style={styles.camWrap}>
+        {perm?.granted ? (
+          <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing="front" />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.placeholder]} />
+        )}
+        <View style={styles.shutter}>
+          <CaptureButton accessibilityLabel={S.takeSelfie} onPress={capture} />
         </View>
-      )}
-      <View style={styles.controls}>
-        <Pressable
-          accessibilityLabel={S.takeSelfie}
-          accessibilityRole="button"
-          onPress={capture}
-          style={styles.shutter}
-        />
       </View>
-      <ActionBar onBack={() => nav.goBack()} forwardEnabled={false} />
-    </View>
+      <View style={styles.bottomBar}>
+        <View style={{ flex: 2 }} />
+        <View style={styles.infoCell}>
+          <InfoButton onPress={() => {}} />
+        </View>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#000" },
-  cam: { flex: 1 },
-  placeholder: { alignItems: "center", justifyContent: "center" },
-  controls: { alignItems: "center", paddingVertical: 20, backgroundColor: "#000" },
+  camWrap: { flex: 1, aspectRatio: 1, alignSelf: "stretch", overflow: "hidden" },
+  placeholder: { backgroundColor: "#000" },
   shutter: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#fff",
-    borderWidth: 4,
-    borderColor: "#2E7D32",
+    position: "absolute",
+    bottom: 16,
+    alignSelf: "center",
   },
+  bottomBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 80,
+    paddingHorizontal: 4,
+    backgroundColor: AppColors.Gray,
+  },
+  infoCell: { flex: 1, alignItems: "flex-end" },
 });

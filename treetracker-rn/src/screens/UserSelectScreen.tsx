@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { ActionBar } from "../components/ActionBar";
+import { Screen } from "../components/Layout";
+import { OrangeAddButton } from "../components/DepthButton";
+import { AppColors, Fonts, TextColors } from "../theme";
 import { Nav } from "../navigation";
 import { useStore } from "../store";
 
@@ -13,41 +16,79 @@ export default function UserSelectScreen() {
   );
 
   return (
-    <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.list}>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.grid}>
         {users.map((u) => {
           const name = `${u.firstName} ${u.lastName}`.trim();
+          const sel = selected === u.uuid;
           return (
             <Pressable
               key={u.uuid}
               onPress={() => setSelected(u.uuid)}
-              style={[styles.card, selected === u.uuid && styles.cardSel]}>
-              <Text style={styles.name}>{name}</Text>
+              style={[styles.card, sel && styles.cardSel]}>
+              {u.photoPath ? (
+                <Image source={{ uri: u.photoPath }} style={styles.photo} />
+              ) : (
+                <View style={[styles.photo, styles.photoPlaceholder]} />
+              )}
+              <Text numberOfLines={1} style={styles.name}>
+                {name}
+              </Text>
+              <Text numberOfLines={1} style={styles.wallet}>
+                {u.wallet}
+              </Text>
             </Pressable>
           );
         })}
       </ScrollView>
       <ActionBar
         onBack={() => nav.navigate("Dashboard")}
+        center={<OrangeAddButton onPress={() => {}} />}
         forwardEnabled={!!selected}
         onForward={() =>
           selected && nav.navigate("WalletSelect", { userUuid: selected })
         }
       />
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff" },
-  list: { padding: 24, paddingTop: 60, gap: 16 },
-  card: {
-    padding: 24,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#2E7D32",
-    alignItems: "center",
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    padding: 8,
+    paddingTop: 16,
   },
-  cardSel: { backgroundColor: "#C8E6C9" },
-  name: { fontSize: 20, fontWeight: "600", color: "#1B5E20" },
+  card: {
+    width: "46%",
+    margin: "2%",
+    backgroundColor: AppColors.GrayShadow,
+    borderRadius: 10,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  cardSel: { borderColor: AppColors.Green },
+  photo: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  photoPlaceholder: { backgroundColor: AppColors.DeepGray },
+  name: {
+    color: TextColors.lightText,
+    fontSize: 12,
+    fontWeight: "600",
+    fontFamily: Fonts.regular,
+    paddingHorizontal: 4,
+  },
+  wallet: {
+    color: TextColors.lightText,
+    fontSize: 12,
+    fontWeight: "600",
+    fontFamily: Fonts.regular,
+    paddingHorizontal: 4,
+  },
 });
