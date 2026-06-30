@@ -18,3 +18,5 @@ Thumbs.db
 .claude
 .env .env.database.development .env.database.production .env.example
 .env*
+
+.claude/settings.local.json
