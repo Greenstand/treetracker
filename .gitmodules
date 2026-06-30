@@ -22,3 +22,21 @@
 [submodule "treetracker-wallet-api"]
 	path = treetracker-wallet-api
 	url = git@github.com:Greenstand/treetracker-wallet-api.git
+[submodule "treetracker-query-api"]
+	path = treetracker-query-api
+	url = git@github.com:Greenstand/treetracker-query-api.git
+[submodule "bulk-pack-transformer-v2"]
+	path = bulk-pack-transformer-v2
+	url = git@github.com:Greenstand/bulk-pack-transformer-v2.git
+[submodule "bulk-pack-processor"]
+	path = bulk-pack-processor
+	url = git@github.com:Greenstand/bulk-pack-processor.git
+[submodule "bulk-pack-transformer"]
+	path = bulk-pack-transformer
+	url = git@github.com:Greenstand/bulk-pack-transformer.git
+[submodule "treetracker-data-pipeline"]
+	path = treetracker-data-pipeline
+	url = git@github.com:Greenstand/treetracker-data-pipeline.git
+[submodule "treetracker-field-data"]
+	path = treetracker-field-data
+	url = git@github.com:Greenstand/treetracker-field-data.git
