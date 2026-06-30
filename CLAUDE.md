@@ -465,6 +465,51 @@ aws s3 cp s3://treetracker-production-batch-uploads/2026-03-09-12-33-43_291f36b6
 ```
 
 
+## Local Test Environment (`local`) — Android e2e against local k3s
+
+Goal: run the whole backend in **local k3s (k3d)** and pass the relocated Android e2e suite
+(`apps/e2e`, moved from `treetracker-android/e2e`) against it. **Keycloak + PostgreSQL are required**
+for the backend (no mocks); the Android signup itself is local/offline and is **not** modified.
+
+### AWS `local` environment (real AWS, not LocalStack)
+
+The `local` env uses **real AWS** so the Android app's Cognito-based S3 upload works with full fidelity.
+Account `053061259712`, region `eu-central-1`, local AWS CLI profile **`greenstand`** (creds in
+`~/.aws`, never committed). Provisioned resources (`treetracker-local-*`):
+
+| Resource | Identifier |
+|---|---|
+| Batch-uploads bucket | `treetracker-local-batch-uploads` (capture/session JSON) |
+| Images bucket | `treetracker-local-images` |
+| SQS queue | `treetracker-local-queue` (`arn:aws:sqs:eu-central-1:053061259712:treetracker-local-queue`) |
+| S3→SQS notification | `s3:ObjectCreated:*` on the batch-uploads bucket → the queue |
+| Cognito identity pool | `treetracker_local` — `eu-central-1:a9ae848f-b57a-411c-97f8-68127119fc2c` (unauth enabled) |
+| IAM unauth role | `treetracker-local-cognito-unauth` (inline `s3:PutObject` on both buckets) |
+
+Verified end-to-end: unauthenticated Cognito creds → S3 `PutObject` → SQS `ObjectCreated` fires.
+
+**Android `local` build** (`treetracker-android/app/build.gradle`, new build type) wires:
+`OBJECT_STORAGE_BUCKET_BATCH_UPLOADS=treetracker-local-batch-uploads`,
+`OBJECT_STORAGE_BUCKET_IMAGES=treetracker-local-images`,
+`OBJECT_STORAGE_IDENTITY_POOL_ID=eu-central-1:a9ae848f-b57a-411c-97f8-68127119fc2c`,
+region/endpoint `eu-central-1`, `USE_AWS_S3=true`, `API_GATEWAY`→local k3s ingress.
+
+**Building the `local` APK** (toolchain on this machine):
+- Android SDK: `/opt/homebrew/share/android-commandlinetools` (Homebrew `android-commandlinetools`). Set `sdk.dir` in `treetracker-android/local.properties` (gitignored) or export `ANDROID_HOME`. An AVD named `greenstand_test` already exists.
+- Use **JDK 21** (`/Library/Java/JavaVirtualMachines/temurin-21.jdk`); Gradle 8.13 rejects JDK 26.
+- `app/google-services.json` has a `.local` client (cloned from `.dev`) so the Firebase plugin accepts the new package.
+- Build: `cd treetracker-android && JAVA_HOME=<jdk21> ANDROID_HOME=/opt/homebrew/share/android-commandlinetools ./gradlew :app:assembleLocal` → `app/build/outputs/apk/local/app-local.apk` (package `org.greenstand.android.TreeTracker.local`). The e2e config (`apps/e2e/.env`, wdio caps) must use this `appPackage` + APK path.
+
+The data pipeline (consumer in `treetracker-data-pipeline`) reads from `treetracker-local-queue` and the
+buckets; the bundle is transformed (`bulk-pack-transformer`/`-v2`, by `pack_format_version`) then loaded
+by `bulk-pack-processor` into PostgreSQL, surfaced via `treetracker-admin-api` → admin-client `/verify`.
+
+### Capture-pipeline submodules
+
+Added to the monorepo (the real S3-upload→DB handling): `treetracker-data-pipeline`,
+`bulk-pack-transformer`, `bulk-pack-transformer-v2`, `bulk-pack-processor`, plus `treetracker-query-api`
+(web-map backend). `treetracker-admin-api` is the admin `/verify` backend (Keycloak-protected).
+
 ## Important Notes
 
 - **Always run tests before creating a PR** - use `yarn cypress-e2e-headless-test` for quick validation
