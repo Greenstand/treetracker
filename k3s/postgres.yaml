@@ -1,0 +1,95 @@
+# Local-only Postgres for the capture→verify e2e stack (k3d cluster 'greenstand').
+# One database `treetracker` with the schemas every service uses:
+#   public      — legacy/main tables (trees, planter, …) admin-api /verify reads; field-data writes legacy tree
+#   field_data  — raw_capture etc. (treetracker-field-data)
+#   data_pipeline — bulk_tree_upload (consumer → processor)
+#   keycloak    — Keycloak's own store
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres
+  namespace: data
+stringData:
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: treetracker
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-initdb
+  namespace: data
+data:
+  01-schemas.sql: |
+    CREATE SCHEMA IF NOT EXISTS field_data;
+    CREATE SCHEMA IF NOT EXISTS data_pipeline;
+    CREATE SCHEMA IF NOT EXISTS keycloak;
+    -- common extensions used by the treetracker schema
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS postgis;
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data
+  namespace: data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: data
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      containers:
+        - name: postgres
+          image: postgis/postgis:15-3.4
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - secretRef: { name: postgres }
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+            - name: initdb
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "postgres", "-d", "treetracker"] }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: postgres-data }
+        - name: initdb
+          configMap: { name: postgres-initdb }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: data
+spec:
+  selector: { app: postgres }
+  ports:
+    - port: 5432
+      targetPort: 5432
