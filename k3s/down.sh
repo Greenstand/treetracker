@@ -16,7 +16,7 @@ set -euo pipefail
 ENV="${ENV:-local}"
 CLUSTER="${CLUSTER:-greenstand}"
 CONTEXT="${KUBE_CONTEXT:-k3d-$CLUSTER}"
-NAMESPACES=(field-data-api rabbitmq data)     # add keycloak/admin/pipeline here as they're deployed
+NAMESPACES=(admin-api bulk-pack-services field-data-api rabbitmq data)
 
 export PATH="/opt/homebrew/bin:$PATH"
 export NO_PROXY="0.0.0.0,127.0.0.1,localhost,::1,.svc,.cluster.local"
@@ -60,7 +60,7 @@ fi
 
 if [ "$CLEAN_IMAGES" = 1 ]; then
   log "removing local images"
-  docker rmi -f treetracker-field-data:local postgis/postgis:15-3.4 rabbitmq:3.13-management 2>/dev/null || true
+  docker rmi -f treetracker-field-data:local bulk-pack-transformer-v2:local bulk-pack-processor:local treetracker-admin-api:local postgis/postgis:15-3.4 rabbitmq:3.13-management 2>/dev/null || true
 fi
 
 log "down complete"

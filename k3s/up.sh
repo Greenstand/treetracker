@@ -144,15 +144,64 @@ step_field_data() {
 }
 
 # ── TODO: remaining services (fill in as built) ─────────────────────────────
-step_transformer_v2() { info "TODO: bulk-pack-transformer-v2 (:3006, TREETRACKER_FIELD_DATA_URL→field-data svc)"; }
-step_processor()      { info "TODO: bulk-pack-processor CronJob (reads data_pipeline.bulk_tree_upload)"; }
-step_consumer()       { info "TODO: treetracker-data-pipeline consumer (SQS treetracker-local-queue→bulk_tree_upload; needs Dockerfile)"; }
-step_keycloak()       { info "TODO: Keycloak (keycloak DB, realm treetracker, admin user)"; }
-step_admin()          { info "TODO: admin-api + admin-client (/verify), resolve admin auth"; }
+step_transformer_v2() {
+  log "bulk-pack-transformer-v2"
+  docker build -t bulk-pack-transformer-v2:local "$ROOT/bulk-pack-transformer-v2" >/tmp/up-btv2-build.log 2>&1 \
+    || die "transformer-v2 image build failed (see /tmp/up-btv2-build.log)"
+  load_image "bulk-pack-transformer-v2:local"
+  k apply -k "$ROOT/bulk-pack-transformer-v2/deployment/overlays/local" >/dev/null
+  k -n bulk-pack-services rollout status deploy/bulk-pack-transformer-v2 --timeout=180s
+}
+step_processor() {
+  log "bulk-pack-processor (CronJob)"
+  docker build -t bulk-pack-processor:local "$ROOT/bulk-pack-processor" >/tmp/up-bpp-build.log 2>&1 \
+    || die "processor image build failed (see /tmp/up-bpp-build.log)"
+  load_image "bulk-pack-processor:local"
+  k apply -k "$ROOT/bulk-pack-processor/deployment/overlays/local" >/dev/null
+  info "cronjob scheduled (*/5); trigger now: kubectl -n bulk-pack-services create job bpp-now --from=cronjob/bulk-pack-processor"
+}
+step_consumer()       { info "SKIPPED: treetracker-data-pipeline consumer (old pg@7.18 client hangs on the PG15 SCRAM handshake). Feed bulk_tree_upload another way for the e2e."; }
+step_keycloak()       { info "SKIPPED: admin stack uses the legacy user system — no Keycloak needed"; }
+step_admin() {
+  log "treetracker-admin-api"
+  docker build -t treetracker-admin-api:local "$ROOT/treetracker-admin-api" >/tmp/up-adminapi-build.log 2>&1 \
+    || die "admin-api image build failed (see /tmp/up-adminapi-build.log)"
+  load_image "treetracker-admin-api:local"
+  k apply -k "$ROOT/treetracker-admin-api/deployment/overlays/local" >/dev/null
+  k -n admin-api rollout status deploy/treetracker-admin-api --timeout=180s
+  seed_admin_user
+  info "TODO: admin-client (React) pointed at admin-api for the /verify UI"
+}
+
+# Seed the legacy admin_user for the /verify login (username/password + HMAC-SHA512(pw,salt)).
+seed_admin_user() {
+  local user="${ADMIN_USER:-test}" pass="${ADMIN_PASSWORD:-ieVyaGqyMX}" salt hash POD
+  salt=$(node -e "console.log(require('crypto').randomBytes(16).toString('hex'))")
+  hash=$(node -e "console.log(require('crypto').createHmac('sha512','$salt').update('$pass').digest('hex'))")
+  POD=$(k -n data get pod -l app=postgres -o jsonpath='{.items[0].metadata.name}')
+  k -n data exec -i "$POD" -- psql -U postgres -d treetracker >/dev/null <<SQL || die "admin user seed failed"
+BEGIN;
+DELETE FROM admin_user_role WHERE admin_user_id IN (SELECT id FROM admin_user WHERE user_name='$user');
+DELETE FROM admin_user WHERE user_name='$user';
+DELETE FROM admin_role WHERE role_name='Local Super';
+WITH r AS (
+  INSERT INTO admin_role (role_name,description,policy,active,created_at)
+  VALUES ('Local Super','local e2e super admin',
+    '{"policies":[{"name":"super_permission"},{"name":"list_tree"},{"name":"approve_tree"},{"name":"list_user"},{"name":"manager_user"}]}'::json,
+    true, now()) RETURNING id
+), u AS (
+  INSERT INTO admin_user (user_name,password_hash,salt,email,active,enabled,created_at)
+  VALUES ('$user','$hash','$salt','$user@greenstand.org', true, true, now()) RETURNING id
+)
+INSERT INTO admin_user_role (role_id, admin_user_id, active) SELECT r.id, u.id, true FROM r, u;
+COMMIT;
+SQL
+  info "seeded admin user '$user' (super role)"
+}
 
 run_all() {
   step_cluster; step_infra_images; step_postgres; step_migrate; step_rabbitmq; step_field_data
-  step_transformer_v2; step_processor; step_consumer; step_keycloak; step_admin
+  step_transformer_v2; step_processor; step_admin
   log "done — data layer + field-data up on $CONTEXT"
 }
 
