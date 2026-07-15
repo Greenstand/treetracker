@@ -16,7 +16,7 @@ set -euo pipefail
 ENV="${ENV:-local}"
 CLUSTER="${CLUSTER:-greenstand}"
 CONTEXT="${KUBE_CONTEXT:-k3d-$CLUSTER}"
-NAMESPACES=(admin-api bulk-pack-services field-data-api rabbitmq data)
+NAMESPACES=(admin-client admin-api bulk-pack-services field-data-api rabbitmq data)
 
 export PATH="/opt/homebrew/bin:$PATH"
 export NO_PROXY="0.0.0.0,127.0.0.1,localhost,::1,.svc,.cluster.local"
@@ -32,8 +32,9 @@ for a in "$@"; do case "$a" in
   *) die "unknown flag '$a' (use --namespaces and/or --images)" ;;
 esac; done
 
-# kill any lingering host-side port-forward
+# kill any lingering host-side port-forwards
 pkill -f "port-forward svc/postgres" 2>/dev/null || true
+pkill -f "port-forward svc/treetracker-admin-client" 2>/dev/null || true
 
 delete_namespaces() {
   # SAFETY: never delete namespaces on a non-local cluster (e.g. the real dev cluster)
@@ -60,7 +61,7 @@ fi
 
 if [ "$CLEAN_IMAGES" = 1 ]; then
   log "removing local images"
-  docker rmi -f treetracker-field-data:local bulk-pack-transformer-v2:local bulk-pack-processor:local treetracker-admin-api:local postgis/postgis:15-3.4 rabbitmq:3.13-management 2>/dev/null || true
+  docker rmi -f treetracker-field-data:local bulk-pack-transformer-v2:local bulk-pack-processor:local treetracker-admin-api:local treetracker-admin-client:local postgis/postgis:15-3.4 rabbitmq:3.13-management 2>/dev/null || true
 fi
 
 log "down complete"

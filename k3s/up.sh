@@ -22,6 +22,8 @@ IMAGE_REGISTRY="${IMAGE_REGISTRY:-}"          # ci: registry to push to; empty �
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 K3S_DIR="$ROOT/k3s"
 NEXTGEN="$ROOT/treetracker-database-nextgen"
+ADMIN_CLIENT="$ROOT/treetracker-admin-client"
+ADMIN_CLIENT_PORT="${ADMIN_CLIENT_PORT:-3001}"   # host port-forward → admin-client pod (ADMIN_URL for the e2e)
 
 export PATH="/opt/homebrew/bin:$PATH"
 export NO_PROXY="0.0.0.0,127.0.0.1,localhost,::1,.svc,.cluster.local"
@@ -170,7 +172,36 @@ step_admin() {
   k apply -k "$ROOT/treetracker-admin-api/deployment/overlays/local" >/dev/null
   k -n admin-api rollout status deploy/treetracker-admin-api --timeout=180s
   seed_admin_user
-  info "TODO: admin-client (React) pointed at admin-api for the /verify UI"
+}
+
+step_admin_client() {
+  log "treetracker-admin-client (static build → nginx pod)"
+  docker build -t treetracker-admin-client:local -f "$ADMIN_CLIENT/deployment/local/Dockerfile" "$ADMIN_CLIENT" \
+    >/tmp/up-adminclient-build.log 2>&1 || die "admin-client image build failed (see /tmp/up-adminclient-build.log)"
+  load_image "treetracker-admin-client:local"
+  k apply -f "$ADMIN_CLIENT/deployment/local/k8s.yaml" >/dev/null
+  k -n admin-client rollout status deploy/treetracker-admin-client --timeout=180s
+  info "in-cluster: nginx serves the build + proxies /auth,/api to admin-api (same-origin, no CORS)"
+  [ "$ENV" = local ] && expose_admin_client
+}
+
+# Persistent host port-forward so the e2e browser (chromedriver on the host) can reach the pod.
+# nohup + disown ⇒ it outlives up.sh; down.sh (or a re-run) cleans it up.
+expose_admin_client() {
+  local code
+  code=$(curl -s -o /dev/null -m 2 -w '%{http_code}' "http://localhost:$ADMIN_CLIENT_PORT/" 2>/dev/null || true)
+  if [ "$code" = 000 ] || [ -z "$code" ]; then
+    pkill -f "port-forward svc/treetracker-admin-client" 2>/dev/null || true; sleep 1
+    nohup kubectl --context "$CONTEXT" -n admin-client port-forward svc/treetracker-admin-client \
+      "$ADMIN_CLIENT_PORT:80" </dev/null >/tmp/up-adminclient-pf.log 2>&1 &
+    disown 2>/dev/null || true
+    local i; for i in $(seq 1 20); do
+      [ "$(curl -s -o /dev/null -m 2 -w '%{http_code}' "http://localhost:$ADMIN_CLIENT_PORT/" 2>/dev/null)" = 200 ] && break; sleep 1
+    done
+  fi
+  [ "$(curl -s -o /dev/null -m 2 -w '%{http_code}' "http://localhost:$ADMIN_CLIENT_PORT/" 2>/dev/null)" = 200 ] \
+    || die "admin-client not reachable on :$ADMIN_CLIENT_PORT (see /tmp/up-adminclient-pf.log)"
+  info "ADMIN_URL=http://localhost:$ADMIN_CLIENT_PORT  (login: ${ADMIN_USER:-test} / ${ADMIN_PASSWORD:-ieVyaGqyMX})"
 }
 
 # Seed the legacy admin_user for the /verify login (username/password + HMAC-SHA512(pw,salt)).
@@ -201,14 +232,14 @@ SQL
 
 run_all() {
   step_cluster; step_infra_images; step_postgres; step_migrate; step_rabbitmq; step_field_data
-  step_transformer_v2; step_processor; step_admin
-  log "done — data layer + field-data up on $CONTEXT"
+  step_transformer_v2; step_processor; step_admin; step_admin_client
+  log "done — full capture→verify backend up on $CONTEXT"
 }
 
 trap stop_pf EXIT
 step_preflight
 case "${1:-all}" in
   all) run_all ;;
-  cluster|infra_images|postgres|migrate|rabbitmq|field_data|transformer_v2|processor|consumer|keycloak|admin) "step_${1}" ;;
-  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq field_data transformer_v2 processor consumer keycloak admin (or 'all')" ;;
+  cluster|infra_images|postgres|migrate|rabbitmq|field_data|transformer_v2|processor|consumer|keycloak|admin|admin_client) "step_${1}" ;;
+  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq field_data transformer_v2 processor consumer keycloak admin admin_client (or 'all')" ;;
 esac
