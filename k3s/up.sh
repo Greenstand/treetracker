@@ -108,6 +108,27 @@ step_cluster() {
   fi
   kubectl config use-context "$CONTEXT" >/dev/null
   [ "$(kubectl config current-context)" = "$CONTEXT" ] || die "context is not $CONTEXT"
+  # k3d writes the kubeconfig server as host.docker.internal, which this machine's
+  # fake-IP DNS resolves to a bogus 198.18.x.x address → API unreachable (EOF). The
+  # serverlb publishes 6443 on 0.0.0.0, so pin the server to 127.0.0.1 (in the cert SANs).
+  if [ "$ENV" = local ]; then
+    local srv port
+    srv=$(kubectl config view -o jsonpath="{.clusters[?(@.name=='$CONTEXT')].cluster.server}")
+    port=${srv##*:}
+    case "$srv" in *host.docker.internal*|*0.0.0.0*)
+      kubectl config set-cluster "$CONTEXT" --server="https://127.0.0.1:$port" >/dev/null ;;
+    esac
+  fi
+  # A freshly-created cluster's API server (and its OpenAPI aggregation, used by
+  # `kubectl apply` client-side validation) lags a few seconds → "failed to download
+  # openapi … EOF". Gate on readiness before anything applies.
+  local i
+  for i in $(seq 1 60); do
+    [ "$(k get --raw=/readyz 2>/dev/null)" = "ok" ] && k get --raw=/openapi/v2 >/dev/null 2>&1 \
+      && k get nodes 2>/dev/null | grep -q ' Ready' && break
+    sleep 2
+  done
+  k get nodes 2>/dev/null | grep -q ' Ready' || die "cluster API/node never became ready"
 }
 
 step_infra_images() { log "infra images"; ensure_image "postgis/postgis:15-3.4"; ensure_image "rabbitmq:3.13-management"; }
@@ -123,15 +144,23 @@ step_postgres() {
 }
 
 step_migrate() {
-  log "db-migrate (treetracker, data_pipeline, field_data)"
+  log "db-migrate (treetracker, data_pipeline, field_data, treetracker-api)"
   start_pf
+  local DBM="$NEXTGEN/treetracker/node_modules/.bin/db-migrate"
   npm_migrate "$NEXTGEN/treetracker"       # public schema (+ field_data/data_pipeline/keycloak schemas)
   npm_migrate "$NEXTGEN/data_pipeline"     # bulk_tree_upload
-  ( cd "$ROOT/treetracker-field-data/database" \
-    && "$NEXTGEN/treetracker/node_modules/.bin/db-migrate" up -e local >/dev/null ) \
+  ( cd "$ROOT/treetracker-field-data/database" && "$DBM" up -e local >/dev/null ) \
     || die "field_data migrate failed"
+  # treetracker-api owns grower_account/capture/tree/... in a `treetracker` schema.
+  # DB default search_path=treetracker,public so uuid_generate_v4/PostGIS stay reachable.
+  PGPASSWORD=postgres psql -h 127.0.0.1 -p 5432 -U postgres -d treetracker -v ON_ERROR_STOP=1 >/dev/null <<'SQL' || die "treetracker schema setup failed"
+CREATE SCHEMA IF NOT EXISTS treetracker;
+ALTER DATABASE treetracker SET search_path TO treetracker, public;
+SQL
+  ( cd "$ROOT/treetracker-api" && "$DBM" up -e local --migrations-dir database/migrations/ >/dev/null ) \
+    || die "treetracker-api migrate failed"
   stop_pf
-  info "public.trees + field_data.raw_capture + data_pipeline.bulk_tree_upload ready"
+  info "public.trees + field_data.* + data_pipeline.bulk_tree_upload + treetracker.grower_account/capture/tree ready"
 }
 
 step_rabbitmq() { log "rabbitmq"; k apply -f "$K3S_DIR/rabbitmq.yaml" >/dev/null; k -n rabbitmq rollout status deploy/rabbitmq --timeout=180s; }
@@ -145,7 +174,24 @@ step_field_data() {
   k -n field-data-api rollout status deploy/treetracker-field-data --timeout=180s
 }
 
-# ── TODO: remaining services (fill in as built) ─────────────────────────────
+step_treetracker_api() {
+  log "treetracker-api (grower_accounts)"
+  docker build -t treetracker-api:local "$ROOT/treetracker-api" >/tmp/up-tta-build.log 2>&1 \
+    || die "treetracker-api image build failed (see /tmp/up-tta-build.log)"
+  load_image "treetracker-api:local"
+  k apply -k "$ROOT/treetracker-api/deployment/overlays/local" >/dev/null
+  k -n treetracker-api rollout status deploy/treetracker-api --timeout=180s
+}
+
+step_images_api() {
+  log "images-api (resize/proxy behind admin-client /images)"
+  docker build -t images-api:local "$ROOT/images-api" >/tmp/up-imgapi-build.log 2>&1 \
+    || die "images-api image build failed (see /tmp/up-imgapi-build.log)"
+  load_image "images-api:local"
+  k apply -k "$ROOT/images-api/deployment/overlays/local" >/dev/null
+  k -n images-api rollout status deploy/images-api --timeout=180s
+}
+
 step_transformer_v2() {
   log "bulk-pack-transformer-v2"
   docker build -t bulk-pack-transformer-v2:local "$ROOT/bulk-pack-transformer-v2" >/tmp/up-btv2-build.log 2>&1 \
@@ -162,7 +208,30 @@ step_processor() {
   k apply -k "$ROOT/bulk-pack-processor/deployment/overlays/local" >/dev/null
   info "cronjob scheduled (*/5); trigger now: kubectl -n bulk-pack-services create job bpp-now --from=cronjob/bulk-pack-processor"
 }
-step_consumer()       { info "SKIPPED: treetracker-data-pipeline consumer (old pg@7.18 client hangs on the PG15 SCRAM handshake). Feed bulk_tree_upload another way for the e2e."; }
+step_consumer() {
+  log "bulk-pack-consumer (SQS → data_pipeline.bulk_tree_upload)"
+  docker build -t bulk-pack-consumer:local "$ROOT/bulk-pack-consumer" >/tmp/up-bpc-build.log 2>&1 \
+    || die "consumer image build failed (see /tmp/up-bpc-build.log)"
+  load_image "bulk-pack-consumer:local"
+  # Secrets created imperatively (real AWS creds never land in git): DB + SQS URL literals,
+  # AWS creds from the local `greenstand` CLI profile.
+  local akid asec
+  akid=$(aws configure get aws_access_key_id --profile "${AWS_PROFILE:-greenstand}" 2>/dev/null)
+  asec=$(aws configure get aws_secret_access_key --profile "${AWS_PROFILE:-greenstand}" 2>/dev/null)
+  [ -n "$akid" ] && [ -n "$asec" ] || die "no AWS creds for profile '${AWS_PROFILE:-greenstand}' (aws configure --profile greenstand)"
+  k -n bulk-pack-services create secret generic bulk-pack-database-connection \
+    --from-literal=db='postgresql://postgres:postgres@postgres.data.svc.cluster.local:5432/data_pipeline' \
+    --dry-run=client -o yaml | k apply -f - >/dev/null
+  k -n bulk-pack-services create secret generic sqs-url \
+    --from-literal=sqsUrl="${SQS_QUEUE_URL:-https://sqs.eu-central-1.amazonaws.com/053061259712/treetracker-local-queue}" \
+    --dry-run=client -o yaml | k apply -f - >/dev/null
+  k -n bulk-pack-services create secret generic aws-key-id --from-literal=accessKeyId="$akid" \
+    --dry-run=client -o yaml | k apply -f - >/dev/null
+  k -n bulk-pack-services create secret generic aws-key --from-literal=secretAccessKey="$asec" \
+    --dry-run=client -o yaml | k apply -f - >/dev/null
+  k apply -k "$ROOT/bulk-pack-consumer/deployment/overlays/local" >/dev/null
+  k -n bulk-pack-services rollout status deploy/bulk-pack-consumer --timeout=180s
+}
 step_keycloak()       { info "SKIPPED: admin stack uses the legacy user system — no Keycloak needed"; }
 step_admin() {
   log "treetracker-admin-api"
@@ -232,7 +301,7 @@ SQL
 
 run_all() {
   step_cluster; step_infra_images; step_postgres; step_migrate; step_rabbitmq; step_field_data
-  step_transformer_v2; step_processor; step_admin; step_admin_client
+  step_treetracker_api; step_transformer_v2; step_processor; step_consumer; step_admin; step_images_api; step_admin_client
   log "done — full capture→verify backend up on $CONTEXT"
 }
 
@@ -240,6 +309,6 @@ trap stop_pf EXIT
 step_preflight
 case "${1:-all}" in
   all) run_all ;;
-  cluster|infra_images|postgres|migrate|rabbitmq|field_data|transformer_v2|processor|consumer|keycloak|admin|admin_client) "step_${1}" ;;
-  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq field_data transformer_v2 processor consumer keycloak admin admin_client (or 'all')" ;;
+  cluster|infra_images|postgres|migrate|rabbitmq|field_data|treetracker_api|images_api|transformer_v2|processor|consumer|keycloak|admin|admin_client) "step_${1}" ;;
+  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq field_data treetracker_api images_api transformer_v2 processor consumer keycloak admin admin_client (or 'all')" ;;
 esac
