@@ -122,11 +122,10 @@ kubectl -n field-data-api rollout status deploy/treetracker-field-data
 
 ---
 
-## Status / still to do
-Done: cluster, Postgres (+ `treetracker`, `data_pipeline`, `field_data`), RabbitMQ, field-data,
-bulk-pack-transformer-v2, bulk-pack-processor (CronJob).
-**Skipped:** `treetracker-data-pipeline` consumer (SQS→`bulk_tree_upload`) — its old `pg@7.18` client
-hangs on the PostgreSQL 15 SCRAM handshake. For the e2e, feed `bulk_tree_upload` another way (direct
-insert, or revisit with `pg@8` / md5 auth).
-Next: **admin-api + admin-client** (legacy user system — username/password + `JWT_SECRET`, **no
-Keycloak**; seed a legacy admin user for the `/verify` login), then run `apps/e2e` `03_capture_setup`.
+## Status
+**Done — full capture→verify stack, `apps/e2e` `03_capture_setup` passes 19/19.** Cluster, Postgres
+(+ `treetracker`, `data_pipeline`, `field_data` schemas), RabbitMQ, treetracker-field-data,
+treetracker-api, images-api, bulk-pack-transformer-v2, bulk-pack-processor (CronJob `*/1`),
+**bulk-pack-consumer** (SQS→`bulk_tree_upload`, `pg@8` — replaced the old `treetracker-data-pipeline`
+consumer that hung on PG15 SCRAM), admin-api + admin-client (legacy username/password + `JWT_SECRET`,
+no Keycloak). `./k3s/up.sh` brings it all up and prints `ADMIN_URL=http://localhost:3001`.

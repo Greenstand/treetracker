@@ -500,15 +500,19 @@ region/endpoint `eu-central-1`, `USE_AWS_S3=true`, `API_GATEWAY`→local k3s ing
 - `app/google-services.json` has a `.local` client (cloned from `.dev`) so the Firebase plugin accepts the new package.
 - Build: `cd treetracker-android && JAVA_HOME=<jdk21> ANDROID_HOME=/opt/homebrew/share/android-commandlinetools ./gradlew :app:assembleLocal` → `app/build/outputs/apk/local/app-local.apk` (package `org.greenstand.android.TreeTracker.local`). The e2e config (`apps/e2e/.env`, wdio caps) must use this `appPackage` + APK path.
 
-The data pipeline (consumer in `treetracker-data-pipeline`) reads from `treetracker-local-queue` and the
-buckets; the bundle is transformed (`bulk-pack-transformer`/`-v2`, by `pack_format_version`) then loaded
-by `bulk-pack-processor` into PostgreSQL, surfaced via `treetracker-admin-api` → admin-client `/verify`.
+The `bulk-pack-consumer` reads from `treetracker-local-queue` and the buckets (writes
+`data_pipeline.bulk_tree_upload`); the bundle is transformed (`bulk-pack-transformer`/`-v2`, by
+`pack_format_version`) then loaded by `bulk-pack-processor` into PostgreSQL (via `treetracker-api` +
+`treetracker-field-data`), surfaced via `treetracker-admin-api` → admin-client `/verify`.
 
 ### Capture-pipeline submodules
 
-Added to the monorepo (the real S3-upload→DB handling): `treetracker-data-pipeline`,
-`bulk-pack-transformer`, `bulk-pack-transformer-v2`, `bulk-pack-processor`, plus `treetracker-query-api`
-(web-map backend). `treetracker-admin-api` is the admin `/verify` backend (Keycloak-protected).
+Added to the monorepo (the real S3-upload→DB handling): `bulk-pack-consumer` (SQS→`bulk_tree_upload`,
+`pg@8`), `bulk-pack-transformer`, `bulk-pack-transformer-v2`, `bulk-pack-processor`, `treetracker-api`
+(grower_accounts + capture/tree schema), `images-api` (`/images` resize), plus `treetracker-query-api`
+(web-map backend). `treetracker-admin-api` is the admin `/verify` backend. (The old
+`treetracker-data-pipeline` submodule was removed — its `pg@7` consumer hung on PG15 SCRAM; superseded
+by `bulk-pack-consumer`.)
 
 ## Important Notes
 

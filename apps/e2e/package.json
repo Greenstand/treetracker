@@ -17,7 +17,7 @@
     "@wdio/spec-reporter": "^9.0.0",
     "appium": "^2.0.0",
     "appium-uiautomator2-driver": "^3.0.0",
-    "chromedriver": "^147.0.4",
+    "chromedriver": "^150.0.4",
     "dotenv": "^16.0.0",
     "ts-node": "^10.0.0",
     "typescript": "^5.0.0"

@@ -34,9 +34,6 @@
 [submodule "bulk-pack-transformer"]
 	path = bulk-pack-transformer
 	url = git@github.com:Greenstand/bulk-pack-transformer.git
-[submodule "treetracker-data-pipeline"]
-	path = treetracker-data-pipeline
-	url = git@github.com:Greenstand/treetracker-data-pipeline.git
 [submodule "treetracker-field-data"]
 	path = treetracker-field-data
 	url = git@github.com:Greenstand/treetracker-field-data.git
