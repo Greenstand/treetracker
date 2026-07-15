@@ -40,3 +40,12 @@
 [submodule "treetracker-field-data"]
 	path = treetracker-field-data
 	url = git@github.com:Greenstand/treetracker-field-data.git
+[submodule "bulk-pack-consumer"]
+	path = bulk-pack-consumer
+	url = git@github.com:Greenstand/bulk-pack-consumer.git
+[submodule "treetracker-api"]
+	path = treetracker-api
+	url = git@github.com:Greenstand/treetracker-api.git
+[submodule "images-api"]
+	path = images-api
+	url = git@github.com:Greenstand/images-api.git
