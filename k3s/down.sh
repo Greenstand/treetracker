@@ -16,7 +16,7 @@ set -euo pipefail
 ENV="${ENV:-local}"
 CLUSTER="${CLUSTER:-greenstand}"
 CONTEXT="${KUBE_CONTEXT:-k3d-$CLUSTER}"
-NAMESPACES=(admin-client admin-api bulk-pack-services treetracker-api images-api field-data-api rabbitmq data)
+NAMESPACES=(admin-client admin-api bulk-pack-services treetracker-api images-api field-data-api rabbitmq data emissary emissary-system)
 
 export PATH="/opt/homebrew/bin:$PATH"
 export NO_PROXY="0.0.0.0,127.0.0.1,localhost,::1,.svc,.cluster.local"

@@ -1,0 +1,30 @@
+# Emissary-ingress (Ambassador) Listener + wildcard Host for the local gateway.
+# The Listener accepts HTTP on 8080 (the emissary Service maps :80→8080; reached from the
+# host via the k3d loadbalancer, `-p 8088:80`). The wildcard Host + empty mappingSelector
+# lets Emissary associate every service's shipped Mapping (/api/admin/, /images/, …) plus
+# the admin-client `/` Mapping. Single origin at http://localhost:8088 → no CORS.
+apiVersion: getambassador.io/v3alpha1
+kind: Listener
+metadata:
+  name: http-listener
+  namespace: emissary
+spec:
+  port: 8080
+  protocol: HTTP
+  securityModel: INSECURE
+  hostBinding:
+    namespace:
+      from: ALL
+---
+apiVersion: getambassador.io/v3alpha1
+kind: Host
+metadata:
+  name: wildcard-host
+  namespace: emissary
+spec:
+  hostname: "*"
+  requestPolicy:
+    insecure:
+      action: Route
+  mappingSelector:
+    matchLabels: {}

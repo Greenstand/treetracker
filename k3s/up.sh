@@ -165,6 +165,24 @@ SQL
 
 step_rabbitmq() { log "rabbitmq"; k apply -f "$K3S_DIR/rabbitmq.yaml" >/dev/null; k -n rabbitmq rollout status deploy/rabbitmq --timeout=180s; }
 
+# Emissary-ingress (OSS Ambassador) — the API gateway. Must run BEFORE the service overlays,
+# which ship getambassador.io/v2 Mappings (need the CRDs). 3.x serves v2 via its conversion webhook.
+EMISSARY_VER="${EMISSARY_VER:-3.12.2}"
+EMISSARY_CHART_VER="${EMISSARY_CHART_VER:-8.12.2}"
+step_gateway() {
+  log "emissary-ingress (API gateway → localhost:8088)"
+  k apply -f "https://app.getambassador.io/yaml/emissary/${EMISSARY_VER}/emissary-crds.yaml" >/dev/null 2>&1 \
+    || die "emissary CRD apply failed"
+  k wait --timeout=150s --for=condition=available deployment emissary-apiext -n emissary-system >/dev/null 2>&1 \
+    || die "emissary-apiext never ready"
+  helm --kube-context "$CONTEXT" repo add datawire https://app.getambassador.io >/dev/null 2>&1 || true
+  helm --kube-context "$CONTEXT" repo update datawire >/dev/null 2>&1 || true
+  helm --kube-context "$CONTEXT" upgrade --install emissary-ingress datawire/emissary-ingress \
+    --version "$EMISSARY_CHART_VER" -n emissary --create-namespace --wait --timeout 5m >/tmp/up-emissary.log 2>&1 \
+    || die "emissary helm install failed (see /tmp/up-emissary.log)"
+  k apply -f "$K3S_DIR/emissary.yaml" >/dev/null   # Listener + wildcard Host
+}
+
 step_field_data() {
   log "treetracker-field-data"
   docker build -t treetracker-field-data:local "$ROOT/treetracker-field-data" >/tmp/up-fielddata-build.log 2>&1 \
@@ -244,33 +262,29 @@ step_admin() {
 }
 
 step_admin_client() {
-  log "treetracker-admin-client (static build → nginx pod)"
+  log "treetracker-admin-client (static SPA → served behind Ambassador)"
   docker build -t treetracker-admin-client:local -f "$ADMIN_CLIENT/deployment/local/Dockerfile" "$ADMIN_CLIENT" \
     >/tmp/up-adminclient-build.log 2>&1 || die "admin-client image build failed (see /tmp/up-adminclient-build.log)"
   load_image "treetracker-admin-client:local"
-  k apply -f "$ADMIN_CLIENT/deployment/local/k8s.yaml" >/dev/null
+  k apply -f "$ADMIN_CLIENT/deployment/local/k8s.yaml" >/dev/null   # Deployment + Service + `/` Mapping
   k -n admin-client rollout status deploy/treetracker-admin-client --timeout=180s
-  info "in-cluster: nginx serves the build + proxies /auth,/api to admin-api (same-origin, no CORS)"
-  [ "$ENV" = local ] && expose_admin_client
+  [ "$ENV" = local ] && check_gateway
 }
 
-# Persistent host port-forward so the e2e browser (chromedriver on the host) can reach the pod.
-# nohup + disown ⇒ it outlives up.sh; down.sh (or a re-run) cleans it up.
-expose_admin_client() {
-  local code
-  code=$(curl -s -o /dev/null -m 2 -w '%{http_code}' "http://localhost:$ADMIN_CLIENT_PORT/" 2>/dev/null || true)
-  if [ "$code" = 000 ] || [ -z "$code" ]; then
-    pkill -f "port-forward svc/treetracker-admin-client" 2>/dev/null || true; sleep 1
-    nohup kubectl --context "$CONTEXT" -n admin-client port-forward svc/treetracker-admin-client \
-      "$ADMIN_CLIENT_PORT:80" </dev/null >/tmp/up-adminclient-pf.log 2>&1 &
-    disown 2>/dev/null || true
-    local i; for i in $(seq 1 20); do
-      [ "$(curl -s -o /dev/null -m 2 -w '%{http_code}' "http://localhost:$ADMIN_CLIENT_PORT/" 2>/dev/null)" = 200 ] && break; sleep 1
-    done
-  fi
-  [ "$(curl -s -o /dev/null -m 2 -w '%{http_code}' "http://localhost:$ADMIN_CLIENT_PORT/" 2>/dev/null)" = 200 ] \
-    || die "admin-client not reachable on :$ADMIN_CLIENT_PORT (see /tmp/up-adminclient-pf.log)"
-  info "ADMIN_URL=http://localhost:$ADMIN_CLIENT_PORT  (login: ${ADMIN_USER:-test} / ${ADMIN_PASSWORD:-ieVyaGqyMX})"
+# The gateway (Emissary via the k3d loadbalancer) is the single entry: http://localhost:8088.
+# No port-forward — routing is by the shipped Mappings (/api/admin/, /images/, …) + admin-client `/`.
+GATEWAY_URL="${GATEWAY_URL:-http://localhost:8088}"
+check_gateway() {
+  local i code
+  for i in $(seq 1 30); do
+    code=$(curl -s -o /dev/null -m 3 -w '%{http_code}' "$GATEWAY_URL/" 2>/dev/null || true)
+    [ "$code" = 200 ] && break; sleep 2
+  done
+  [ "$code" = 200 ] || die "gateway not serving admin-client at $GATEWAY_URL (code=$code)"
+  code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' -X POST "$GATEWAY_URL/api/admin/auth/login" \
+    -H 'Content-Type: application/json' -d "{\"userName\":\"${ADMIN_USER:-test}\",\"password\":\"${ADMIN_PASSWORD:-ieVyaGqyMX}\"}" 2>/dev/null || true)
+  [ "$code" = 200 ] || die "gateway → admin-api login route not working ($GATEWAY_URL/api/admin/auth/login = $code)"
+  info "ADMIN_URL=$GATEWAY_URL  (login: ${ADMIN_USER:-test} / ${ADMIN_PASSWORD:-ieVyaGqyMX}) — via Ambassador"
 }
 
 # Seed the legacy admin_user for the /verify login (username/password + HMAC-SHA512(pw,salt)).
@@ -300,15 +314,17 @@ SQL
 }
 
 run_all() {
-  step_cluster; step_infra_images; step_postgres; step_migrate; step_rabbitmq; step_field_data
-  step_treetracker_api; step_transformer_v2; step_processor; step_consumer; step_admin; step_images_api; step_admin_client
-  log "done — full capture→verify backend up on $CONTEXT"
+  step_cluster; step_infra_images; step_postgres; step_migrate; step_rabbitmq
+  step_gateway   # BEFORE service overlays — they ship Ambassador Mappings (need the CRDs)
+  step_field_data; step_treetracker_api; step_transformer_v2; step_processor; step_consumer
+  step_admin; step_images_api; step_admin_client
+  log "done — full capture→verify backend up on $CONTEXT (gateway: $GATEWAY_URL)"
 }
 
 trap stop_pf EXIT
 step_preflight
 case "${1:-all}" in
   all) run_all ;;
-  cluster|infra_images|postgres|migrate|rabbitmq|field_data|treetracker_api|images_api|transformer_v2|processor|consumer|keycloak|admin|admin_client) "step_${1}" ;;
-  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq field_data treetracker_api images_api transformer_v2 processor consumer keycloak admin admin_client (or 'all')" ;;
+  cluster|infra_images|postgres|migrate|rabbitmq|gateway|field_data|treetracker_api|images_api|transformer_v2|processor|consumer|keycloak|admin|admin_client) "step_${1}" ;;
+  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq gateway field_data treetracker_api images_api transformer_v2 processor consumer keycloak admin admin_client (or 'all')" ;;
 esac

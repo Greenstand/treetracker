@@ -7,10 +7,9 @@ clusters.
 
 ## Quick start (scripts)
 ```bash
-./k3s/prepare.sh     # ONCE per machine (macOS-specific): install tools + fix Docker proxy.
-                     #   Re-run if your LAN IP changes (docker pulls start failing).
+./k3s/prepare.sh     # ONCE per machine (macOS-specific): install tools (k3d/helm/awscli/libpq).
 ./k3s/up.sh          # portable, idempotent: bring up the whole stack. Re-run to repair/continue.
-                     #   single step: ./k3s/up.sh postgres | migrate | rabbitmq | field_data | ...
+                     #   single step: ./k3s/up.sh gateway | field_data | treetracker_api | admin_client | ...
 ./k3s/down.sh        # tear down: delete the k3d cluster (all pods + data).
                      #   ./k3s/down.sh --namespaces   (keep cluster, drop stack namespaces)
                      #   ./k3s/down.sh --images        (also remove built/pulled images)
@@ -21,14 +20,11 @@ The sections below document what those scripts do, step by step.
 
 > ⚠️ **Context safety:** the kube context often reverts to the real dev cluster
 > `do-sfo2-dev-k8s-treetracker` across sessions. Before ANY `kubectl`/`apply`/`exec`, run
-> `kubectl config use-context k3d-greenstand` and assert it. Every command below assumes:
-> ```bash
-> export PATH="/opt/homebrew/bin:$PATH"
-> export NO_PROXY="0.0.0.0,127.0.0.1,localhost,::1,.svc,.cluster.local" no_proxy="$NO_PROXY"
-> kubectl config use-context k3d-greenstand
-> ```
-> `NO_PROXY` is required because the shell inherits `http_proxy` (ClashX); without it kubectl routes the
-> localhost API call through the proxy and fails.
+> `kubectl config use-context k3d-greenstand` and assert it.
+>
+> **This machine no longer uses a proxy** — write plain commands (no `NO_PROXY`/`http_proxy`
+> scaffolding). See [Environment gotchas](#environment-gotchas-found-the-hard-way) for the
+> proxy/DNS cleanup that had to happen and why a network hang is *not* a proxy issue anymore.
 
 ---
 
@@ -39,19 +35,17 @@ brew link --force libpq         # puts psql/pg_dump on PATH (keg-only otherwise)
 # Docker Desktop installed; Node via nvm (v24 used here)
 ```
 
-## 1. Internet proxy (this machine has no direct internet)
-Host uses ClashX at `127.0.0.1:7890`.
-- Shell tools: `export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890`
-- **Docker image pulls** (daemon runs in Docker Desktop's VM, can't reach host loopback):
-  1. In ClashX enable **“Allow connections from LAN”** (binds `0.0.0.0:7890`).
-  2. Point Docker's daemon proxy at the Mac's LAN IP (manual mode):
-     ```bash
-     IP=$(ipconfig getifaddr "$(route -n get default | awk '/interface:/{print $2}')")
-     # settings-store.json: ProxyHTTPMode=manual, OverrideProxyHTTP/HTTPS=http://$IP:7890
-     ```
-     File: `~/Library/Group Containers/group.com.docker/settings-store.json`; restart Docker after.
-  3. **When the Mac's IP changes (DHCP), redo step 2** — else `docker pull` → "network is unreachable".
-- Raw TCP (e.g. Postgres :25060 to the online DB) works directly, no proxy needed.
+## 1. Networking — no proxy (was ClashX)
+This machine **no longer uses a proxy**; commands reach the network directly. Earlier it ran ClashX
+(`127.0.0.1:7890`) and needed proxy env + a Docker-daemon proxy; that is all removed. Two config-level
+proxies had to be cleared or builds/installs hung against the dead `…:7890`:
+- **npm:** `npm config delete proxy && npm config delete https-proxy` (was in `~/.npmrc`).
+- **Docker daemon:** `~/Library/Group Containers/group.com.docker/settings-store.json` →
+  `ProxyHTTPMode=system`, blank `OverrideProxyHTTP/HTTPS`, then restart Docker.
+
+ClashX's **fake-IP DNS is still active**, though — see [gotchas](#environment-gotchas-found-the-hard-way):
+it hands `198.18.x.x` for names it doesn't really own (e.g. `host.docker.internal`), which breaks a
+fresh k3d cluster's kubeconfig until pinned to `127.0.0.1` (up.sh does this).
 
 ## 2. Create the k3d cluster
 ```bash
@@ -122,10 +116,66 @@ kubectl -n field-data-api rollout status deploy/treetracker-field-data
 
 ---
 
+## AWS `local` environment (real AWS, not LocalStack)
+The Android→S3→SQS leg uses **real AWS**: account `053061259712`, region `eu-central-1`, CLI profile
+**`greenstand`** (creds in `~/.aws`, never committed). Resources (`treetracker-local-*`):
+batch-uploads bucket (JSON bundles), images bucket (photos), SQS `treetracker-local-queue`, Cognito pool
+`treetracker_local` (unauth), IAM role `treetracker-local-cognito-unauth` (inline policy
+`treetracker-local-s3-put`).
+
+**Two fixes the Android upload requires** — the app does `PutObject` with a **public-read ACL**
+(`x-amz-grant-read:…AllUsers`) on every object; without both, the app's "ready to upload" counter
+never drains and both buckets stay empty:
+1. **Buckets must allow ACLs.** They were created ACL-disabled (modern default `BucketOwnerEnforced`)
+   → `400 AccessControlListNotSupported`. Per bucket:
+   ```bash
+   aws s3api put-bucket-ownership-controls --bucket <b> \
+     --ownership-controls 'Rules=[{ObjectOwnership=BucketOwnerPreferred}]'
+   aws s3api put-public-access-block --bucket <b> \
+     --public-access-block-configuration 'BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false'
+   ```
+2. **Cognito unauth role needs `s3:PutObjectAcl`** (+`s3:PutObjectVersionAcl`) → else
+   `403 … not authorized to perform s3:PutObjectAcl`. Add them to the inline policy alongside
+   `s3:PutObject`/`GetObject`/… (IAM eval is live — cached Cognito creds pick it up immediately).
+
+The **bulk-pack-consumer** needs AWS creds to read SQS+S3; `up.sh` creates the k8s Secrets imperatively
+from `aws configure get … --profile greenstand` (never in git). Env keys: `DATABASE_URL`
+(data_pipeline DB), `SQS_URL`, `AWS_ACCESS_KEY_ID`, `AWS_ACCESS_KEY` (note: **not** `_SECRET_`).
+Checks: `aws s3 ls s3://treetracker-local-batch-uploads/ --recursive` ·
+`aws sqs get-queue-attributes --queue-url <q> --attribute-names ApproximateNumberOfMessages`.
+
+## Environment gotchas (found the hard way)
+- **Fake-IP DNS breaks a fresh cluster.** k3d writes the kubeconfig API server as
+  `host.docker.internal:<port>`; ClashX fake-IP DNS resolves that to a bogus `198.18.x.x` → `kubectl`
+  gets `EOF`. `up.sh step_cluster` rewrites the server to `https://127.0.0.1:<port>` (serverlb publishes
+  6443 on `0.0.0.0`; `127.0.0.1` is in the API cert SANs).
+- **Cold-cluster OpenAPI lag.** Right after create, `kubectl apply` validation fails
+  `failed to download openapi … EOF`. `step_cluster` gates on `/readyz`==ok + `/openapi/v2` + node Ready
+  before anything applies.
+- **chromedriver must match host Chrome major** (admin `/verify` step drives Chrome) — bump
+  `apps/e2e` `chromedriver@^<major>` when Chrome updates (147→150 here).
+- **npm ci peer-dep conflicts** (node16/npm8) in some service repos (e.g. `co-mocha` vs `mocha@8`) →
+  build with `npm ci --omit=dev --legacy-peer-deps`.
+- **Async session → capture 409.** field-data creates sessions asynchronously, so a capture POSTed
+  right after its session 409s ("session … yet to be created") and is left `processed=f`; the
+  bulk-pack-processor cron is `* * * * *` locally so retries land within the e2e `/verify` poll window.
+- **treetracker-api uses a `treetracker` schema** (not public): the migrate step does
+  `CREATE SCHEMA treetracker; ALTER DATABASE treetracker SET search_path TO treetracker, public;`
+  then runs its db-migrate migrations.
+
+## API gateway (Ambassador / Emissary-ingress)
+The browser reaches everything through **one origin — `http://localhost:8088`** (the k3d loadbalancer →
+Emissary), routed by each service's **shipped `getambassador.io` Mapping** (`/api/admin/` → admin-api,
+`/images/` → images-api, `/field-data/`, `/treetracker/`, all `rewrite: /`) plus an admin-client `/`
+Mapping. `up.sh step_gateway` installs Emissary (CRDs + helm) and a `Listener` + wildcard `Host`
+(`k3s/emissary.yaml`) **before** the service overlays (which now keep their Mappings). No per-service
+port-forward, no nginx reverse-proxy (admin-client nginx serves static only); single origin ⇒ no CORS.
+
 ## Status
-**Done — full capture→verify stack, `apps/e2e` `03_capture_setup` passes 19/19.** Cluster, Postgres
-(+ `treetracker`, `data_pipeline`, `field_data` schemas), RabbitMQ, treetracker-field-data,
+**Done — full capture→verify stack, `apps/e2e` `03_capture_setup` passes 19/19** (via the Ambassador
+gateway, and after a from-scratch `down.sh`→`up.sh` rebuild). Cluster, Postgres (+ `treetracker`,
+`data_pipeline`, `field_data` schemas), RabbitMQ, Emissary gateway, treetracker-field-data,
 treetracker-api, images-api, bulk-pack-transformer-v2, bulk-pack-processor (CronJob `*/1`),
 **bulk-pack-consumer** (SQS→`bulk_tree_upload`, `pg@8` — replaced the old `treetracker-data-pipeline`
 consumer that hung on PG15 SCRAM), admin-api + admin-client (legacy username/password + `JWT_SECRET`,
-no Keycloak). `./k3s/up.sh` brings it all up and prints `ADMIN_URL=http://localhost:3001`.
+no Keycloak). `./k3s/up.sh` brings it all up and prints `ADMIN_URL=http://localhost:8088`.
