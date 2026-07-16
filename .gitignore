@@ -1,0 +1,25 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+.claude
+.env .env.database.development .env.database.production .env.example
+.env*
+
+.claude/settings.local.json
+
+node_modules
+test-artifacts

@@ -1,2 +1,1 @@
-# treetracker
-The monorepo for all applications of treetracker
+# Greenstand root repository

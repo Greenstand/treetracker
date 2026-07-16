@@ -1,0 +1,14 @@
+{
+  "name": "treetracker-database-nextgen-data-pipeline",
+  "version": "1.0.0",
+  "description": "db-migrate schema for the local data_pipeline DB (capture staging: bulk_tree_upload); first migration is the online dev data_pipeline baseline",
+  "scripts": {
+    "migrate:up": "db-migrate up -e local -t nextgen_migrations",
+    "migrate:down": "db-migrate down -e local -t nextgen_migrations",
+    "migrate:reset": "db-migrate reset -e local -t nextgen_migrations"
+  },
+  "dependencies": {
+    "db-migrate": "^0.11.14",
+    "db-migrate-pg": "^1.5.2"
+  }
+}
