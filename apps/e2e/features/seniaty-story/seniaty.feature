@@ -39,4 +39,3 @@ Feature: Seniaty Story V1.0
     And user D finds Seniaty's token in the list and buys it with a credit card via Stripe, receiving the token in the wallet
     Then user E receives the money in his bank account
     And user E pays Seniaty outside the Greenstand platform in any possible way
-*note grow's 
