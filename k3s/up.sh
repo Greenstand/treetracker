@@ -23,6 +23,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 K3S_DIR="$ROOT/k3s"
 NEXTGEN="$ROOT/treetracker-database-nextgen"
 ADMIN_CLIENT="$ROOT/treetracker-admin-client"
+WALLET_APP="$ROOT/treetracker-wallet-app"
 ADMIN_CLIENT_PORT="${ADMIN_CLIENT_PORT:-3001}"   # host port-forward → admin-client pod (ADMIN_URL for the e2e)
 
 export PATH="/opt/homebrew/bin:$PATH"
@@ -271,6 +272,16 @@ step_admin_client() {
   [ "$ENV" = local ] && check_gateway
 }
 
+step_wallet_app() {
+  log "treetracker-wallet-app (static Next.js export → /wallet)"
+  docker build -t treetracker-wallet-app:local -f "$WALLET_APP/deployment/local/Dockerfile" "$WALLET_APP" \
+    >/tmp/up-walletapp-build.log 2>&1 || die "wallet-app image build failed (see /tmp/up-walletapp-build.log)"
+  load_image "treetracker-wallet-app:local"
+  k apply -f "$WALLET_APP/deployment/local/k8s.yaml" >/dev/null
+  k -n wallet-app rollout status deploy/treetracker-wallet-app --timeout=180s
+  [ "$ENV" = local ] && check_wallet_gateway
+}
+
 # The gateway (Emissary via the k3d loadbalancer) is the single entry: http://localhost:8088.
 # No port-forward — routing is by the shipped Mappings (/api/admin/, /images/, …) + admin-client `/`.
 GATEWAY_URL="${GATEWAY_URL:-http://localhost:8088}"
@@ -285,6 +296,16 @@ check_gateway() {
     -H 'Content-Type: application/json' -d "{\"userName\":\"${ADMIN_USER:-test}\",\"password\":\"${ADMIN_PASSWORD:-ieVyaGqyMX}\"}" 2>/dev/null || true)
   [ "$code" = 200 ] || die "gateway → admin-api login route not working ($GATEWAY_URL/api/admin/auth/login = $code)"
   info "ADMIN_URL=$GATEWAY_URL  (login: ${ADMIN_USER:-test} / ${ADMIN_PASSWORD:-ieVyaGqyMX}) — via Ambassador"
+}
+
+check_wallet_gateway() {
+  local i code
+  for i in $(seq 1 30); do
+    code=$(curl -s -o /dev/null -m 3 -w '%{http_code}' "$GATEWAY_URL/wallet/" 2>/dev/null || true)
+    [ "$code" = 200 ] && break; sleep 2
+  done
+  [ "$code" = 200 ] || die "gateway not serving wallet-app at $GATEWAY_URL/wallet/ (code=$code)"
+  info "WALLET_URL=$GATEWAY_URL/wallet/"
 }
 
 # Seed the legacy admin_user for the /verify login (username/password + HMAC-SHA512(pw,salt)).
@@ -317,7 +338,7 @@ run_all() {
   step_cluster; step_infra_images; step_postgres; step_migrate; step_rabbitmq
   step_gateway   # BEFORE service overlays — they ship Ambassador Mappings (need the CRDs)
   step_field_data; step_treetracker_api; step_transformer_v2; step_processor; step_consumer
-  step_admin; step_images_api; step_admin_client
+  step_admin; step_images_api; step_admin_client; step_wallet_app
   log "done — full capture→verify backend up on $CONTEXT (gateway: $GATEWAY_URL)"
 }
 
@@ -325,6 +346,6 @@ trap stop_pf EXIT
 step_preflight
 case "${1:-all}" in
   all) run_all ;;
-  cluster|infra_images|postgres|migrate|rabbitmq|gateway|field_data|treetracker_api|images_api|transformer_v2|processor|consumer|keycloak|admin|admin_client) "step_${1}" ;;
-  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq gateway field_data treetracker_api images_api transformer_v2 processor consumer keycloak admin admin_client (or 'all')" ;;
+  cluster|infra_images|postgres|migrate|rabbitmq|gateway|field_data|treetracker_api|images_api|transformer_v2|processor|consumer|keycloak|admin|admin_client|wallet_app) "step_${1}" ;;
+  *)   die "unknown step '${1}'. steps: cluster infra_images postgres migrate rabbitmq gateway field_data treetracker_api images_api transformer_v2 processor consumer keycloak admin admin_client wallet_app (or 'all')" ;;
 esac
