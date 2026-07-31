@@ -9,7 +9,7 @@ clusters.
 ```bash
 ./k3s/prepare.sh     # ONCE per machine (macOS-specific): install tools (k3d/helm/awscli/libpq).
 ./k3s/up.sh          # portable, idempotent: bring up the whole stack. Re-run to repair/continue.
-                     #   single step: ./k3s/up.sh gateway | field_data | treetracker_api | admin_client | ...
+                     #   single step: ./k3s/up.sh gateway | field_data | treetracker_api | admin_client | wallet_app | ...
 ./k3s/down.sh        # tear down: delete the k3d cluster (all pods + data).
                      #   ./k3s/down.sh --namespaces   (keep cluster, drop stack namespaces)
                      #   ./k3s/down.sh --images        (also remove built/pulled images)
@@ -170,6 +170,17 @@ Emissary), routed by each service's **shipped `getambassador.io` Mapping** (`/ap
 Mapping. `up.sh step_gateway` installs Emissary (CRDs + helm) and a `Listener` + wildcard `Host`
 (`k3s/emissary.yaml`) **before** the service overlays (which now keep their Mappings). No per-service
 port-forward, no nginx reverse-proxy (admin-client nginx serves static only); single origin ⇒ no CORS.
+
+## Wallet web app
+The wallet monorepo's `apps/web` workspace is built as a static Next.js export and served by nginx
+behind Emissary at **`http://localhost:8088/wallet/`**. Its local image and deployment can be repaired
+or updated independently:
+```bash
+./k3s/up.sh wallet_app
+```
+The build sets the Next.js base path to `/wallet`; Emissary strips that prefix before forwarding to
+the wallet-app Service. Authentication and wallet API calls use the development Keycloak/user/wallet
+endpoints configured as build arguments in `treetracker-wallet-app/deployment/local/Dockerfile`.
 
 ## Status
 **Done — full capture→verify stack, `apps/e2e` `03_capture_setup` passes 19/19** (via the Ambassador

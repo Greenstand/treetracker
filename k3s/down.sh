@@ -16,7 +16,7 @@ set -euo pipefail
 ENV="${ENV:-local}"
 CLUSTER="${CLUSTER:-greenstand}"
 CONTEXT="${KUBE_CONTEXT:-k3d-$CLUSTER}"
-NAMESPACES=(admin-client admin-api bulk-pack-services treetracker-api images-api field-data-api rabbitmq data emissary emissary-system)
+NAMESPACES=(wallet-app admin-client admin-api bulk-pack-services treetracker-api images-api field-data-api rabbitmq data emissary emissary-system)
 
 export PATH="/opt/homebrew/bin:$PATH"
 export NO_PROXY="0.0.0.0,127.0.0.1,localhost,::1,.svc,.cluster.local"
@@ -61,7 +61,7 @@ fi
 
 if [ "$CLEAN_IMAGES" = 1 ]; then
   log "removing local images"
-  docker rmi -f treetracker-field-data:local treetracker-api:local images-api:local bulk-pack-transformer-v2:local bulk-pack-processor:local bulk-pack-consumer:local treetracker-admin-api:local treetracker-admin-client:local postgis/postgis:15-3.4 rabbitmq:3.13-management 2>/dev/null || true
+  docker rmi -f treetracker-wallet-app:local treetracker-field-data:local treetracker-api:local images-api:local bulk-pack-transformer-v2:local bulk-pack-processor:local bulk-pack-consumer:local treetracker-admin-api:local treetracker-admin-client:local postgis/postgis:15-3.4 rabbitmq:3.13-management 2>/dev/null || true
 fi
 
 log "down complete"
