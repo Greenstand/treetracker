@@ -9,7 +9,7 @@ clusters.
 ```bash
 ./k3s/prepare.sh     # ONCE per machine (macOS-specific): install tools (k3d/helm/awscli/libpq).
 ./k3s/up.sh          # portable, idempotent: bring up the whole stack. Re-run to repair/continue.
-                     #   single step: ./k3s/up.sh gateway | field_data | treetracker_api | admin_client | ...
+                     #   single step: ./k3s/up.sh gateway | field_data | treetracker_api | admin_client | wallet_app | ...
 ./k3s/down.sh        # tear down: delete the k3d cluster (all pods + data).
                      #   ./k3s/down.sh --namespaces   (keep cluster, drop stack namespaces)
                      #   ./k3s/down.sh --images        (also remove built/pulled images)
@@ -170,6 +170,21 @@ Emissary), routed by each service's **shipped `getambassador.io` Mapping** (`/ap
 Mapping. `up.sh step_gateway` installs Emissary (CRDs + helm) and a `Listener` + wildcard `Host`
 (`k3s/emissary.yaml`) **before** the service overlays (which now keep their Mappings). No per-service
 port-forward, no nginx reverse-proxy (admin-client nginx serves static only); single origin ⇒ no CORS.
+
+## Wallet web app
+The wallet monorepo's `apps/web` workspace is built as a static Next.js export and served by nginx
+behind Emissary at **`http://localhost:8088/wallet/`**. Repair or rebuild it on its own with:
+```bash
+./k3s/up.sh wallet_app
+```
+The image is built with `NEXT_PUBLIC_BASE_PATH=/wallet`, so Next emits its assets under
+`/wallet/_next/...`; Emissary strips the `/wallet` prefix before forwarding to the Service. Auth and
+wallet API calls point at the shared dev endpoints, set as build args in
+`treetracker-wallet-app/deployment/local/Dockerfile`.
+
+Login goes through the shared dev realm. The `treetracker-wallet-client-fe` client carries
+`http://localhost:8088/wallet/*` as a valid redirect URI and `http://localhost:8088` as a web
+origin, both required for the local gateway.
 
 ## Status
 **Done — full capture→verify stack, `apps/e2e` `03_capture_setup` passes 19/19** (via the Ambassador
